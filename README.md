@@ -16,12 +16,12 @@ You can use it to transform any standard table into a fully-featured interactive
 
 Highly recommended if you're dealing with big tables and need to quickly extract relevant data from them.
 
-The transformation is done using <a href="http://tabulator.info/" target="_blank">Tabulator</a>, a great table management JS library by <a href="https://github.com/olifolkerd">oliforked</a>.
+The transformation is done using <a href="http://tabulator.info/" target="_blank">Tabulator</a>, a great table management JS library made by <a href="https://github.com/olifolkerd">Oli Folkerd</a> which I'm extensively using in all my web-based projects.
 
 ## External Packages
 Here's a list of all the open-source, third-party packages that have been used within the extension (all credit due to their respective authors):
 * <a href="https://github.com/olifolkerd/tabulator" target="_blank">Tabulator</a>, by <a href="https://github.com/olifolkerd/" target="_blank">Oliforked</a> (<a href="https://github.com/olifolkerd/tabulator/blob/master/LICENSE" target="_blank">MIT</a> license)
-* <a href="https://github.com/twbs/bootstrap/" target="_blank">Bootsrap</a>, by <a href="https://getbootstrap.com/docs/4.3/about/team/" target="_blank">the Bootstrap team</a> (<a href="https://github.com/twbs/bootstrap/blob/master/LICENSE" target="_blank">MIT</a> license).
+* <a href="https://github.com/twbs/bootstrap/" target="_blank">Bootsrap</a>, by <a href="https://getbootstrap.com/docs/4.3/about/team/" target="_blank">the Bootstrap team</a> (<a href="https://github.com/twbs/bootstrap/blob/master/LICENSE" target="_blank">MIT</a> license)
 * <a href="https://github.com/jquery/jquery" target="_blank">JQuery</a>, by <a href="https://jquery.org/team/" target="_blank">the JQuery foundation</a> (<a href="https://github.com/jquery/jquery/blob/master/LICENSE.txt" target="_blank">MIT</a> license)
 
 ## Useful Resources
