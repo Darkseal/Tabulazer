@@ -31,10 +31,7 @@
   "permissions": [
     "activeTab",
     "contextMenus",
-    "storage",
-    "http://*/*",
-    "https://*/*",
-    ""
+    "storage"
   ],
   "web_accessible_resources": [
     "lib/*/*",

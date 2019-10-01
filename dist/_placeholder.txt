@@ -1,0 +1,2 @@
+This folder contains the zip file that will be published to the Chrome Web Store.
+

@@ -5,6 +5,7 @@
 
 
 development/
+dist/*
 
 # User-specific files
 *.suo
