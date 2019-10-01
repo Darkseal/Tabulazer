@@ -27,5 +27,5 @@ Here's a list of all the open-source, third-party packages that have been used w
 
 ## Useful Resources
 * <a href="https://www.ryadel.com/en/tabulazer-chrome-extension-filter-sort-html-table-tables/" target="_blank">Tabulazer Official Page</a>
-* <a href="https://github.com/olifolkerd/tabulator" target="_blank">Tabulator on GitHub</a>
 * <a href="https://github.com/Darkseal/tabulazer" target="_blank">Tabulazer on GitHub</a>
+* <a href="https://github.com/olifolkerd/tabulator" target="_blank">Tabulator on GitHub</a>
