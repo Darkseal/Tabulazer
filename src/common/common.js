@@ -28,6 +28,7 @@ function initTable(el) {
                         layout: "fitColumns",
                         movableColumns: false,
                         resizableColumns: true,
+                        headerFilterPlaceholder: ""
                     };
 
                     if (items.paging) {
@@ -38,11 +39,17 @@ function initTable(el) {
 
                     table = new Tabulator($t.get(0), options);
 
-                    if (items.filters) {
-                        var columns = table.getColumnDefinitions();
-                        columns.forEach(column => { column.width = null; column.tooltip = true; column.headerFilter = "input"; });
-                        table.setColumns(columns);
-                    }
+                    
+                    var columns = table.getColumnDefinitions();
+                    columns.forEach(column => {
+                        column.width = null;
+                        column.tooltip = true;
+                        column.formatter = "html";
+                        if (items.filters) {
+                            column.headerFilter = "input";
+                        }
+                    });
+                    table.setColumns(columns);
                 });
 
         }
