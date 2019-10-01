@@ -11,6 +11,7 @@ You can use it to transform any standard table into a fully-featured interactive
 * Width enlarge to 100% (to increase readability)
 * Dynamic paging (useful for very long tables)
 * Resizable columns (using mouse handlers)
+* Copy & Paste support with seamless CSV/Excel/Google Sheets support (using CTRL+C)
 
 ... and more!
 
@@ -25,5 +26,6 @@ Here's a list of all the open-source, third-party packages that have been used w
 * <a href="https://github.com/jquery/jquery" target="_blank">JQuery</a>, by <a href="https://jquery.org/team/" target="_blank">the JQuery foundation</a> (<a href="https://github.com/jquery/jquery/blob/master/LICENSE.txt" target="_blank">MIT</a> license)
 
 ## Useful Resources
+* <a href="https://www.ryadel.com/en/tabulazer-chrome-extension-filter-sort-html-table-tables/" target="_blank">Tabulazer Official Page</a>
 * <a href="https://github.com/olifolkerd/tabulator" target="_blank">Tabulator on GitHub</a>
 * <a href="https://github.com/Darkseal/tabulazer" target="_blank">Tabulazer on GitHub</a>

@@ -11,6 +11,16 @@ function initTable(el) {
             // if the table has not TH on first line, change all TDs to THs
             $t.find('tr:first td').wrapInner('<div />').find('div').unwrap().wrap('<th />');
 
+            // if there are empty TH on first line, fill them so they will be sortable/searchable as well
+            var thCnt = 0;
+            $t.find('tr:first th').each(function (i, e) {
+                var $e = $(e);
+                if (!$e.text().trim()) {
+                    thCnt++;
+                    $(e).html("#"+thCnt);
+                }
+            }); 
+
             chrome.storage.sync.get({
                 forceWidth: false,
                 sorting: true,
@@ -28,7 +38,39 @@ function initTable(el) {
                         layout: "fitColumns",
                         movableColumns: false,
                         resizableColumns: true,
-                        headerFilterPlaceholder: ""
+                        headerFilterPlaceholder: "",
+                        clipboard: true, //enable clipboard functionality
+                        clipboardCopySelector: "table", //change default selector to active
+                        clipboardCopyStyled: false,
+                        clipboardCopyFormatter: function (data) {
+                            var output = [];
+
+                            // temporary patch until Tabulator fixes this bug
+                            // https://github.com/olifolkerd/tabulator/pull/2399
+                            data.forEach(function (row) {
+                                var newRow = [];
+                                row.forEach(function (value) {
+                                    if (typeof value == "undefined") {
+                                        value = "";
+                                    }
+
+                                    value = typeof value == "undefined" || value === null ? "" : value.toString();
+
+                                    if (value.match(/\r|\n/)) {
+                                        value = value.split('"').join('""');
+                                        value = '"' + value + '"';
+                                    }
+                                    newRow.push(value);
+                                });
+                                output.push(newRow.join("\t"));
+                            });
+
+                            return output.join("\n");
+
+                        },
+                        clipboardCopied: function (clipboard) {
+                            // clipboard - the string that has been copied into the clipboard
+                        },
                     };
 
                     if (items.paging) {
@@ -38,7 +80,6 @@ function initTable(el) {
                     }
 
                     table = new Tabulator($t.get(0), options);
-
                     
                     var columns = table.getColumnDefinitions();
                     columns.forEach(column => {
@@ -50,6 +91,9 @@ function initTable(el) {
                         }
                     });
                     table.setColumns(columns);
+
+                    // force a redraw to fix row vertical spacing issues
+                    table.redraw();
                 });
 
         }
