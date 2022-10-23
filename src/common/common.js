@@ -55,7 +55,7 @@ function initTable(el) {
                         // enable paging
                         options.pagination = true,
                         options.paginationMode = "local",
-                        options.paginationSize = 10;
+                        options.paginationSize = 100;
                     }
 
                     table = new Tabulator($t.get(0), options);
