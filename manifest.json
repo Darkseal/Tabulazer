@@ -1,7 +1,7 @@
 {
   "name": "Tabulazer - Table Filter and Sorter",
-  "version": "0.7.5",
-  "manifest_version": 2,
+  "version": "0.8.0",
+  "manifest_version": 3,
   "description": "Filter, sort, page and style any existing HTML table using the Tabulator JS library.",
   "default_locale": "en",
   "homepage_url": "http://chrome-table-manager.ryadel.com",
@@ -10,16 +10,14 @@
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
   },
-  "browser_action": {
+  "action": {
     "default_icon": "icons/icon19.png",
     "default_title": "Tabulazer",
     "default_popup": "src/browser_action/browser_action.html"
   },
   "background": {
-    "scripts": [
-      "src/background/background.js"
-    ],
-    "persistent": false
+    "service_worker": "src/worker/worker.js",
+    "type": "module"
   },
   "content_scripts": [
     {
@@ -31,11 +29,19 @@
   "permissions": [
     "activeTab",
     "contextMenus",
-    "storage"
+    "storage",
+    "scripting"
   ],
   "web_accessible_resources": [
-    "lib/*/*",
-    "src/common/*/*"
+    {
+      "resources": [
+        "lib/*/*",
+        "src/common/*/*"
+      ],
+      "matches": ["<all_urls>"]
+    }
   ],
-  "content_security_policy": "script-src 'self' 'unsafe-eval' 'unsafe-inline'; object-src 'self'"
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  }
 }
