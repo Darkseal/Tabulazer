@@ -175,9 +175,9 @@ function rebuildContextMenus() {
 
         // Children
         [
-          { id: tabulazer.toggleMenuId, title: "Toggle Table" },
-          { id: tabulazer.pickMenuId, title: "Pick Table" },
-          { id: tabulazer.openPanelMenuId, title: "Open Side Panel" },
+          { id: tabulazer.toggleMenuId, title: "Toggle Table", enabled: false },
+          { id: tabulazer.pickMenuId, title: "Pick Table", enabled: true },
+          { id: tabulazer.openPanelMenuId, title: "Open Side Panel", enabled: true },
 
           { id: tabulazer.copyRootMenuId, title: "Copy Table to Clipboard" },
           { id: tabulazer.downloadRootMenuId, title: "Download Table as" },
@@ -188,6 +188,7 @@ function rebuildContextMenus() {
               parentId: tabulazer.rootMenuId,
               type: "normal",
               title: item.title,
+              enabled: (item.enabled !== undefined) ? item.enabled : true,
               contexts: ["page"],
             },
             () => {
