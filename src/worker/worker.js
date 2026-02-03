@@ -41,14 +41,14 @@ function injectScripts(tab) {
           target: { tabId: tab.id },
           files: [
             "lib/jquery/3.4.1/jquery.min.js",
-            "lib/tabulator/5.4.2/js/tabulator.min.js",
+            "lib/tabulator/6.3.0/js/tabulator.min.js",
             "src/common/common.js",
           ],
         }),
         chrome.scripting.insertCSS({
           target: { tabId: tab.id },
           files: [
-            "lib/tabulator/5.4.2/css/tabulator_simple.min.css",
+            "lib/tabulator/6.3.0/css/tabulator_simple.min.css",
             "src/common/common.css",
           ],
         }),
