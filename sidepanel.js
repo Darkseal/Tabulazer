@@ -187,6 +187,17 @@ async function wireEvents() {
     await refreshTables(true);
   });
 
+  $("btn-activate-all").addEventListener("click", async function () {
+    setStatus("Working...");
+    var resp = await sendMessage({ type: "activateAll" });
+    if (resp && resp.ok === false && resp.error) {
+      setStatus(resp.error);
+    } else {
+      setStatus("");
+    }
+    await refreshTables(true);
+  });
+
   $("btn-deactivate-all").addEventListener("click", async function () {
     setStatus("Working...");
     await sendMessage({ type: "deactivateAll" });

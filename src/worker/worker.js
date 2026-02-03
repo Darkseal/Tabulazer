@@ -295,6 +295,30 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     return true;
   }
 
+  if (kind === "activateAll") {
+    getActiveTab(async (tab) => {
+      if (!tab || !tab.id) {
+        sendResponse({ ok: false, error: "No active tab" });
+        return;
+      }
+
+      // List tables/hosts from the page and activate all inactive real tables.
+      chrome.tabs.sendMessage(tab.id, { type: "listTables" }, async (resp) => {
+        const tables = (resp && resp.tables) ? resp.tables : [];
+        const inactive = tables.filter((t) => t && !t.active);
+
+        await injectScripts(tab);
+
+        inactive.forEach((t) => {
+          callToggle(tab, t.id); // activate (activateById toggles off if active; these are inactive)
+        });
+
+        sendResponse({ ok: true, count: inactive.length });
+      });
+    });
+    return true;
+  }
+
   if (kind === "deactivateAll") {
     getActiveTab(async (tab) => {
       if (!tab || !tab.id) {
