@@ -1,16 +1,12 @@
 const tabulazer = {
   menuItemId: "tabulazer-activate",
-  _listenersAttached: false,
 };
-
-console.log("Tabulazer service worker loaded", chrome.runtime.getManifest().version);
 
 function callActivateById(tab, tableId) {
   chrome.scripting.executeScript({
     target: { tabId: tab.id },
     args: [tableId],
     func: (tableIdArg) => {
-      // common.js defines window.tabulazerActivateById
       if (typeof window.tabulazerActivateById === "function") {
         window.tabulazerActivateById(tableIdArg);
       } else {
@@ -33,7 +29,6 @@ function injectScripts(tab) {
       const injected = e2 && e2.value ? e2.value.injected : false;
       const injectedVersion = e2 && e2.value ? e2.value.version : null;
 
-      // Re-inject if never injected, or if injected with a different extension version.
       if (injected && injectedVersion === extVersion) {
         resolve();
         return;
@@ -68,74 +63,34 @@ function injectScripts(tab) {
   });
 }
 
-function ensureContextMenu() {
-  try {
-    console.log("Tabulazer SW: ensureContextMenu()");
-
-    // Create (or recreate) menu entry on service worker startup.
-    chrome.contextMenus.removeAll(() => {
-      if (chrome.runtime.lastError) {
-        console.warn("Tabulazer SW: contextMenus.removeAll error", chrome.runtime.lastError.message);
-      }
-
-      chrome.contextMenus.create(
-        {
-          id: tabulazer.menuItemId,
-          type: "normal",
-          title: "Tabulazer - Table Filter and Sorter",
-          contexts: ["all"],
-          // Some Chrome builds only show extension context menus when URL patterns are explicit.
-          // Include both http(s) and file URLs.
-          documentUrlPatterns: ["http://*/*", "https://*/*", "file://*/*"],
-        },
-        () => {
-          if (chrome.runtime.lastError) {
-            console.error(
-              "Tabulazer SW: contextMenus.create error",
-              chrome.runtime.lastError.message
-            );
-          } else {
-            console.log("Tabulazer SW: context menu created");
-          }
-        }
-      );
-    });
-  } catch (e) {
-    console.error("Tabulazer: failed to create context menu", e);
-  }
-}
-
-function ensureListeners() {
-  if (tabulazer._listenersAttached) return;
-  tabulazer._listenersAttached = true;
-
-  chrome.contextMenus.onClicked.addListener((info, tab) => {
-    if (info.menuItemId !== tabulazer.menuItemId) return;
-
-    chrome.tabs.sendMessage(tab.id, { type: "getLastTableTarget" }, (resp) => {
-      const tableId = resp && resp.value ? resp.value.tableId : null;
-      if (!tableId) {
-        console.warn(
-          "Tabulazer: no table target captured (right-click was not on a table?)"
-        );
-        return;
-      }
-      renderTable(tab, tableId);
-    });
-  });
-}
-
-// Create menus on install/update, and also whenever the service worker starts.
+// Important: create context menus in onInstalled (recommended & most reliable in MV3)
 chrome.runtime.onInstalled.addListener(() => {
-  ensureContextMenu();
-  ensureListeners();
+  chrome.contextMenus.create(
+    {
+      id: tabulazer.menuItemId,
+      type: "normal",
+      title: "Tabulazer - Table Filter and Sorter",
+      contexts: ["page"],
+    },
+    () => {
+      // Ignore duplicate id errors on reloads.
+      const err = chrome.runtime.lastError;
+      if (err && !/duplicate/i.test(err.message || "")) {
+        console.warn("Tabulazer: contextMenus.create", err.message);
+      }
+    }
+  );
 });
 
-chrome.runtime.onStartup?.addListener(() => {
-  ensureContextMenu();
-  ensureListeners();
-});
+chrome.contextMenus.onClicked.addListener((info, tab) => {
+  if (info.menuItemId !== tabulazer.menuItemId) return;
 
-// Also run immediately when the service worker is evaluated.
-ensureContextMenu();
-ensureListeners();
+  chrome.tabs.sendMessage(tab.id, { type: "getLastTableTarget" }, (resp) => {
+    const tableId = resp && resp.value ? resp.value.tableId : null;
+    if (!tableId) {
+      console.warn("Tabulazer: no table target captured (right-click was not on a table?)");
+      return;
+    }
+    renderTable(tab, tableId);
+  });
+});
