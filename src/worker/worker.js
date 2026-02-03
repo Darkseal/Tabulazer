@@ -84,6 +84,9 @@ function ensureContextMenu() {
           type: "normal",
           title: "Tabulazer - Table Filter and Sorter",
           contexts: ["all"],
+          // Some Chrome builds only show extension context menus when URL patterns are explicit.
+          // Include both http(s) and file URLs.
+          documentUrlPatterns: ["http://*/*", "https://*/*", "file://*/*"],
         },
         () => {
           if (chrome.runtime.lastError) {
