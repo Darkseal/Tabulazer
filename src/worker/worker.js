@@ -1,21 +1,7 @@
 const tabulazer = {
-  menuItemId: "tabulazer-activate",
+  menuItemId: "tabulazer-toggle",
+  pickMenuItemId: "tabulazer-pick",
 };
-
-// Keep per-tab active state so the popup can show on/off toggles.
-// Key: tabId -> Set<tableId>
-const activeByTab = new Map();
-
-function setActive(tabId, tableId, active) {
-  if (!tabId || !tableId) return;
-  let set = activeByTab.get(tabId);
-  if (!set) {
-    set = new Set();
-    activeByTab.set(tabId, set);
-  }
-  if (active) set.add(tableId);
-  else set.delete(tableId);
-}
 
 function callToggle(tab, tableId) {
   chrome.scripting.executeScript({
@@ -110,11 +96,25 @@ chrome.runtime.onInstalled.addListener(() => {
     {
       id: tabulazer.menuItemId,
       type: "normal",
-      title: "Tabulazer - Table Filter and Sorter",
+      title: "Tabulazer: Toggle table",
       contexts: ["page"],
     },
     () => {
-      // Ignore duplicate id errors on reloads.
+      const err = chrome.runtime.lastError;
+      if (err && !/duplicate/i.test(err.message || "")) {
+        console.warn("Tabulazer: contextMenus.create", err.message);
+      }
+    }
+  );
+
+  chrome.contextMenus.create(
+    {
+      id: tabulazer.pickMenuItemId,
+      type: "normal",
+      title: "Tabulazer: Pick table...",
+      contexts: ["page"],
+    },
+    () => {
       const err = chrome.runtime.lastError;
       if (err && !/duplicate/i.test(err.message || "")) {
         console.warn("Tabulazer: contextMenus.create", err.message);
@@ -124,6 +124,14 @@ chrome.runtime.onInstalled.addListener(() => {
 });
 
 chrome.contextMenus.onClicked.addListener((info, tab) => {
+  if (!tab || !tab.id) return;
+
+  if (info.menuItemId === tabulazer.pickMenuItemId) {
+    // Start overlay picker
+    chrome.tabs.sendMessage(tab.id, { type: "startPicker" }, () => {});
+    return;
+  }
+
   if (info.menuItemId !== tabulazer.menuItemId) return;
 
   chrome.tabs.sendMessage(tab.id, { type: "getLastTableTarget" }, (resp) => {
@@ -152,8 +160,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       }
       chrome.tabs.sendMessage(tab.id, { type: "listTables" }, (resp) => {
         const tables = (resp && resp.tables) ? resp.tables : [];
-        // Prefer DOM-derived state from the content script (host divs == active).
-        // This avoids desync when the service worker is restarted or status messages are missed.
+        // State comes from the page DOM (hosts == active).
         const withState = tables.map((t) => ({ ...t, active: !!t.active }));
         sendResponse({ ok: true, tables: withState });
       });
@@ -224,10 +231,4 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     return;
   }
 
-  if (kind === "tabulazerStatus") {
-    const tabId = sender && sender.tab ? sender.tab.id : null;
-    const tableId = request && request.tableId;
-    const active = !!(request && request.active);
-    setActive(tabId, tableId, active);
-  }
 });

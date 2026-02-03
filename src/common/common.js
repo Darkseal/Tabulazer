@@ -153,11 +153,6 @@
         originalHtml,
         instance,
       };
-
-      // Notify background (used for popup UI state)
-      try {
-        chrome.runtime.sendMessage({ type: "tabulazerStatus", tableId, active: true });
-      } catch (e) {}
     });
   }
 
@@ -182,11 +177,6 @@
 
     entry.active = false;
     delete registry[tableId];
-
-    // Notify background (used for popup UI state)
-    try {
-      chrome.runtime.sendMessage({ type: "tabulazerStatus", tableId, active: false });
-    } catch (e) {}
   }
 
   // Track the most recently activated table id to enable a toggle fallback

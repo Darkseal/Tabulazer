@@ -133,7 +133,7 @@ function startPicker() {
 
   var badge = document.createElement("div");
   badge.id = "tabulazer-picker-badge";
-  badge.innerHTML = "<strong>Tabulazer</strong>: click a table to activate. Press ESC to cancel.";
+  badge.innerHTML = "<strong>Tabulazer</strong>: click a table to activate/deactivate. Press ESC to cancel.";
   document.documentElement.appendChild(badge);
   tabulazer._pickerBadgeEl = badge;
 
@@ -173,9 +173,14 @@ function startPicker() {
     // Keep for context-menu flow too.
     tabulazer.lastTableId = hit.id;
 
-    // Notify service worker to activate on this tab.
+    // Notify service worker.
     try {
-      chrome.runtime.sendMessage({ type: "pickerSelected", tableId: hit.id });
+      if (hit.kind === "host") {
+        // Clicking a Tabulator host means the table is active: toggle off.
+        chrome.runtime.sendMessage({ type: "deactivateById", tableId: hit.id });
+      } else {
+        chrome.runtime.sendMessage({ type: "pickerSelected", tableId: hit.id });
+      }
     } catch (e) {
       // Fallback: we can still store lastTableId; user can use the context menu.
     }

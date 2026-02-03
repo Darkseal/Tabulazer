@@ -29,6 +29,21 @@ function restore_options() {
     });
 }
 
+var _refreshTimer = null;
+
+function setStatus(msg) {
+    $("#statusMsg").text(msg || "");
+}
+
+function refreshTablesDebounced() {
+    if (_refreshTimer) {
+        clearTimeout(_refreshTimer);
+    }
+    _refreshTimer = setTimeout(function() {
+        refreshTables();
+    }, 350);
+}
+
 function renderTables(tables) {
     var $list = $("#tablesList");
     $list.empty();
@@ -60,16 +75,26 @@ function renderTables(tables) {
             .attr("type", "checkbox")
             .prop("checked", state)
             .on("change", function() {
-                var next = $(this).is(":checked");
-                if (next) {
-                    chrome.runtime.sendMessage({ type: "activateById", tableId: t.id }, function() {
-                        refreshTables();
-                    });
-                } else {
-                    chrome.runtime.sendMessage({ type: "deactivateById", tableId: t.id }, function() {
-                        refreshTables();
-                    });
-                }
+                var el = this;
+                var next = $(el).is(":checked");
+
+                // Avoid double-clicks / flicker: disable until refresh.
+                $(el).prop("disabled", true);
+                setStatus("Working...");
+
+                var msg = next ? { type: "activateById", tableId: t.id } : { type: "deactivateById", tableId: t.id };
+                chrome.runtime.sendMessage(msg, function(resp) {
+                    // Best-effort: show error if the SW reported one
+                    if (resp && resp.ok === false && resp.error) {
+                        setStatus(resp.error);
+                    } else {
+                        setStatus("");
+                    }
+
+                    // Refresh twice: immediate + debounced (activation can take a moment).
+                    refreshTables();
+                    refreshTablesDebounced();
+                });
             });
 
         var $right = $("<div/>").css({ flex: "0 0 auto" }).append($toggle);
@@ -82,9 +107,11 @@ function renderTables(tables) {
 function refreshTables() {
     chrome.runtime.sendMessage({ type: "popupListTables" }, function(resp) {
         if (!resp || !resp.ok) {
+            if (resp && resp.error) setStatus(resp.error);
             renderTables([]);
             return;
         }
+        setStatus("");
         renderTables(resp.tables);
     });
 }
@@ -103,8 +130,10 @@ $(function() {
     });
 
     $("#btnToggleLast").on("click", function() {
+        setStatus("Working...");
         chrome.runtime.sendMessage({ type: "popupToggleLast" }, function() {
             refreshTables();
+            refreshTablesDebounced();
         });
     });
 
