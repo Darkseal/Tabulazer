@@ -65,13 +65,25 @@ function injectScripts(tab) {
   });
 }
 
-chrome.runtime.onInstalled.addListener(() => {
-  chrome.contextMenus.create({
-    id: tabulazer.menuItemId,
-    type: "normal",
-    title: "Tabulazer - Table Filter and Sorter",
-    contexts: ["page"],
-  });
+function ensureContextMenu() {
+  try {
+    // Create (or recreate) menu entry on service worker startup.
+    chrome.contextMenus.removeAll(() => {
+      chrome.contextMenus.create({
+        id: tabulazer.menuItemId,
+        type: "normal",
+        title: "Tabulazer - Table Filter and Sorter",
+        contexts: ["page"],
+      });
+    });
+  } catch (e) {
+    console.error("Tabulazer: failed to create context menu", e);
+  }
+}
+
+function ensureListeners() {
+  if (tabulazer._listenersAttached) return;
+  tabulazer._listenersAttached = true;
 
   chrome.contextMenus.onClicked.addListener((info, tab) => {
     if (info.menuItemId !== tabulazer.menuItemId) return;
@@ -87,4 +99,19 @@ chrome.runtime.onInstalled.addListener(() => {
       renderTable(tab, tableId);
     });
   });
+}
+
+// Create menus on install/update, and also whenever the service worker starts.
+chrome.runtime.onInstalled.addListener(() => {
+  ensureContextMenu();
+  ensureListeners();
 });
+
+chrome.runtime.onStartup?.addListener(() => {
+  ensureContextMenu();
+  ensureListeners();
+});
+
+// Also run immediately when the service worker is evaluated.
+ensureContextMenu();
+ensureListeners();
