@@ -105,7 +105,10 @@ body {
 }
 
 .shortcuts {
-  margin-top: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 12px;
+  padding: 10px;
+  background: rgba(148, 163, 184, 0.06);
 }
 
 .remember-row {
