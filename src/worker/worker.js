@@ -1,6 +1,9 @@
 const tabulazer = {
   menuItemId: "tabulazer-activate",
+  _listenersAttached: false,
 };
+
+console.log("Tabulazer service worker loaded", chrome.runtime.getManifest().version);
 
 function callActivateById(tab, tableId) {
   chrome.scripting.executeScript({
@@ -67,14 +70,32 @@ function injectScripts(tab) {
 
 function ensureContextMenu() {
   try {
+    console.log("Tabulazer SW: ensureContextMenu()");
+
     // Create (or recreate) menu entry on service worker startup.
     chrome.contextMenus.removeAll(() => {
-      chrome.contextMenus.create({
-        id: tabulazer.menuItemId,
-        type: "normal",
-        title: "Tabulazer - Table Filter and Sorter",
-        contexts: ["page"],
-      });
+      if (chrome.runtime.lastError) {
+        console.warn("Tabulazer SW: contextMenus.removeAll error", chrome.runtime.lastError.message);
+      }
+
+      chrome.contextMenus.create(
+        {
+          id: tabulazer.menuItemId,
+          type: "normal",
+          title: "Tabulazer - Table Filter and Sorter",
+          contexts: ["all"],
+        },
+        () => {
+          if (chrome.runtime.lastError) {
+            console.error(
+              "Tabulazer SW: contextMenus.create error",
+              chrome.runtime.lastError.message
+            );
+          } else {
+            console.log("Tabulazer SW: context menu created");
+          }
+        }
+      );
     });
   } catch (e) {
     console.error("Tabulazer: failed to create context menu", e);
