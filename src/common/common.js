@@ -201,4 +201,15 @@
   };
   window.tabulazerDeactivateById = deactivate;
   window.tabulazerToggleLast = toggleLast;
+
+  // Export helpers
+  window.tabulazerGetOriginalHtmlById = function (tableId) {
+    const entry = registry[tableId];
+    if (entry && entry.active && entry.originalHtml) return entry.originalHtml;
+    return null;
+  };
+
+  window.tabulazerGetLastActivatedId = function () {
+    return lastActivatedId || null;
+  };
 })();

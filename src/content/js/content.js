@@ -243,6 +243,10 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     case "getLastTableTarget":
       sendResponse({ value: { tableId: tabulazer.lastTableId } });
       break;
+    case "setLastTableTarget":
+      tabulazer.lastTableId = (request && request.tableId) ? request.tableId : tabulazer.lastTableId;
+      sendResponse({ ok: true });
+      break;
     case "getInjected":
       sendResponse({ value: { injected: tabulazer.isInjected, version: tabulazer.injectedVersion } });
       break;
