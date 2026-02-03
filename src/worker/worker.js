@@ -2,23 +2,34 @@ const tabulazer = {
   menuItemId: "tabulazer-activate",
 };
 
-function callActivateById(tab, tableId) {
+function callToggle(tab, tableId) {
   chrome.scripting.executeScript({
     target: { tabId: tab.id },
     args: [tableId],
     func: (tableIdArg) => {
-      if (typeof window.tabulazerActivateById === "function") {
+      if (tableIdArg && typeof window.tabulazerActivateById === "function") {
         window.tabulazerActivateById(tableIdArg);
-      } else {
-        console.warn("Tabulazer: common.js not loaded (missing tabulazerActivateById)");
+        return;
       }
+
+      // Fallback: if we couldn't resolve a tableId (some pages stop the contextmenu event
+      // after Tabulator renders), try toggling off the last activated table.
+      if (typeof window.tabulazerToggleLast === "function") {
+        const ok = window.tabulazerToggleLast();
+        if (!ok) {
+          console.warn("Tabulazer: no tableId and nothing to toggle");
+        }
+        return;
+      }
+
+      console.warn("Tabulazer: common.js not loaded (missing API)");
     },
   });
 }
 
 async function renderTable(tab, tableId) {
   await injectScripts(tab);
-  callActivateById(tab, tableId);
+  callToggle(tab, tableId);
 }
 
 function injectScripts(tab) {

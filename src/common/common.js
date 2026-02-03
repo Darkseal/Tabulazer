@@ -174,7 +174,26 @@
     delete registry[tableId];
   }
 
+  // Track the most recently activated table id to enable a toggle fallback
+  // even when the original <table> is replaced by the Tabulator UI.
+  let lastActivatedId = null;
+
+  function toggleLast() {
+    if (!lastActivatedId) return false;
+    if (registry[lastActivatedId] && registry[lastActivatedId].active) {
+      deactivate(lastActivatedId);
+      return true;
+    }
+    // If it's not active we can't reliably re-activate without a real <table>.
+    // Activation should be done via activate(tableId) when a table target is known.
+    return false;
+  }
+
   // Expose API
-  window.tabulazerActivateById = activate;
+  window.tabulazerActivateById = function (tableId) {
+    lastActivatedId = tableId;
+    return activate(tableId);
+  };
   window.tabulazerDeactivateById = deactivate;
+  window.tabulazerToggleLast = toggleLast;
 })();
