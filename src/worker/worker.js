@@ -1,74 +1,84 @@
 const tabulazer = {
-    menuItemId: "tabulazer-activate"
+  menuItemId: "tabulazer-activate",
 };
 
-
-function callInitTable(tab) {
-    chrome.scripting.executeScript({
-        func: () => {
-            initTable(tabulazer.clickedElement)
-        },
-        target: {
-            tabId: tab.id,
-        }
-    })
+function callActivateById(tab, tableId) {
+  chrome.scripting.executeScript({
+    target: { tabId: tab.id },
+    args: [tableId],
+    func: (tableIdArg) => {
+      // common.js defines window.tabulazerActivateById
+      if (typeof window.tabulazerActivateById === "function") {
+        window.tabulazerActivateById(tableIdArg);
+      } else {
+        console.warn("Tabulazer: common.js not loaded (missing tabulazerActivateById)");
+      }
+    },
+  });
 }
 
-async function renderTable(e, tab) {
-    await injectScripts(e, tab)
-    callInitTable(tab);
+async function renderTable(tab, tableId) {
+  await injectScripts(tab);
+  callActivateById(tab, tableId);
 }
 
-function injectScripts(e, tab, callback) {
-    return new Promise(resolve => {
-        chrome.tabs.sendMessage(tab.id, "getInjected", e2 => {
-            if (e2.value) {
-                console.log("aleady injected: do nothing");
-                resolve()
-            }
-            else {
-                console.log("injecting libs...")
-                return Promise.all([
-                    chrome.scripting.executeScript({
-                        files: [
-                            "lib/jquery/3.4.1/jquery.min.js",
-                            "lib/tabulator/5.4.2/js/tabulator.min.js",
-                            "src/common/common.js",
-                        ],
-                        target: {
-                            tabId: tab.id,
-                        }
-                    }),
-                    chrome.scripting.insertCSS({
-                        files: [
-                            'lib/tabulator/5.4.2/css/tabulator_simple.min.css',
-                            'src/common/common.css'
-                        ],
-                        target: {
-                            tabId: tab.id,
-                        }
-                    })
-                ]).then(() => {
-                    chrome.tabs.sendMessage(tab.id, "setInjected");
-                    console.log("... done.")
-                    resolve()
-                });
-            }
+function injectScripts(tab) {
+  return new Promise((resolve) => {
+    chrome.tabs.sendMessage(tab.id, "getInjected", (e2) => {
+      if (e2 && e2.value) {
+        resolve();
+        return;
+      }
+
+      Promise.all([
+        chrome.scripting.executeScript({
+          target: { tabId: tab.id },
+          files: [
+            "lib/jquery/3.4.1/jquery.min.js",
+            "lib/tabulator/5.4.2/js/tabulator.min.js",
+            "src/common/common.js",
+          ],
+        }),
+        chrome.scripting.insertCSS({
+          target: { tabId: tab.id },
+          files: [
+            "lib/tabulator/5.4.2/css/tabulator_simple.min.css",
+            "src/common/common.css",
+          ],
+        }),
+      ])
+        .then(() => {
+          chrome.tabs.sendMessage(tab.id, "setInjected");
+          resolve();
+        })
+        .catch((err) => {
+          console.error("Tabulazer: injectScripts failed", err);
+          resolve();
         });
     });
+  });
 }
 
 chrome.runtime.onInstalled.addListener(() => {
-    chrome.contextMenus.create({
-        id: tabulazer.menuItemId,
-        type: "normal",
-        title: "Tabulazer - Table Filter and Sorter",
-        contexts: [ "page" ],
-    })
+  chrome.contextMenus.create({
+    id: tabulazer.menuItemId,
+    type: "normal",
+    title: "Tabulazer - Table Filter and Sorter",
+    contexts: ["page"],
+  });
 
-    chrome.contextMenus.onClicked.addListener((info, tab) => {
-        if (info.menuItemId == tabulazer.menuItemId) {
-            chrome.tabs.sendMessage(tab.id, "getClickedElement", e => renderTable(e, tab));
-        }
+  chrome.contextMenus.onClicked.addListener((info, tab) => {
+    if (info.menuItemId !== tabulazer.menuItemId) return;
+
+    chrome.tabs.sendMessage(tab.id, "getLastTableTarget", (resp) => {
+      const tableId = resp && resp.value ? resp.value.tableId : null;
+      if (!tableId) {
+        console.warn(
+          "Tabulazer: no table target captured (right-click was not on a table?)"
+        );
+        return;
+      }
+      renderTable(tab, tableId);
     });
+  });
 });

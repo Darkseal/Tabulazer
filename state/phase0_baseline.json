@@ -1,0 +1,14 @@
+{
+  "timestamp": "2026-02-03T00:44:55.052570+00:00",
+  "repo": "Darkseal/Tabulazer",
+  "commit": "ac21ef5",
+  "manifest_version": 3,
+  "tabulator_vendor_path": "lib/tabulator/5.4.2",
+  "test_pages": [
+    "big.html",
+    "empty-headers.html",
+    "multi.html",
+    "no-th.html",
+    "simple.html"
+  ]
+}

@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tabulazer Test - No TH</title>
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 20px; }
+    table { border-collapse: collapse; width: 900px; }
+    th, td { border: 1px solid #ccc; padding: 6px 8px; }
+  </style>
+</head>
+<body>
+  <h1>Table without TH (first row uses TD)</h1>
+  <p>Tabulazer currently converts first row TD → TH. Use this to verify header conversion.</p>
+  <table id="t2">
+    <tr><td>Product</td><td>Category</td><td>Price</td></tr>
+    <tr><td>Mouse</td><td>Hardware</td><td>19.99</td></tr>
+    <tr><td>Keyboard</td><td>Hardware</td><td>59.99</td></tr>
+    <tr><td>Notebook</td><td>Stationery</td><td>3.50</td></tr>
+  </table>
+</body>
+</html>

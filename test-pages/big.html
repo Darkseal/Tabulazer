@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tabulazer Test - Big Table</title>
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 20px; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #ddd; padding: 4px 6px; font-size: 13px; }
+    th { position: sticky; top: 0; background: #f6f6f6; }
+    .wrap { max-width: 520px; }
+  </style>
+</head>
+<body>
+  <h1>Big table (performance + paging)</h1>
+  <p>Use this to test paging and responsiveness.</p>
+  <table id="t4">
+    <thead>
+      <tr><th>ID</th><th>Name</th><th>Department</th><th class="wrap">Notes</th></tr>
+    </thead>
+    <tbody id="rows"></tbody>
+  </table>
+
+  <script>
+    const rows = document.getElementById('rows');
+    const depts = ['IT','HR','Sales','Ops','Finance'];
+    for (let i = 1; i <= 800; i++) {
+      const tr = document.createElement('tr');
+      const dept = depts[i % depts.length];
+      const note = `Row ${i} – Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor.`;
+      tr.innerHTML = `<td>${i}</td><td>User-${i}</td><td>${dept}</td><td>${note}</td>`;
+      rows.appendChild(tr);
+    }
+  </script>
+</body>
+</html>
