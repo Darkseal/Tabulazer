@@ -128,17 +128,31 @@ try {
       const err = chrome.runtime.lastError;
       const inTable = (!err && resp) ? !!resp.inTable : false;
 
-      chrome.contextMenus.update(tabulazer.toggleMenuId, { enabled: inTable }, () => {
-        const e = chrome.runtime.lastError;
-        if (e) console.warn("Tabulazer: contextMenus.update(toggle)", e.message);
-      });
-      chrome.contextMenus.update(tabulazer.pickMenuId, { enabled: !inTable }, () => {
-        const e = chrome.runtime.lastError;
-        if (e) console.warn("Tabulazer: contextMenus.update(pick)", e.message);
-      });
+      function applyUpdates() {
+        chrome.contextMenus.update(tabulazer.toggleMenuId, { enabled: inTable }, () => {
+          const e = chrome.runtime.lastError;
+          if (e) console.warn("Tabulazer: contextMenus.update(toggle)", e.message);
+        });
+        chrome.contextMenus.update(tabulazer.pickMenuId, { enabled: !inTable }, () => {
+          const e = chrome.runtime.lastError;
+          if (e) console.warn("Tabulazer: contextMenus.update(pick)", e.message);
+        });
 
-      // Update the already-open menu.
-      try { chrome.contextMenus.refresh(); } catch (e) {}
+        // Update the already-open menu.
+        try { chrome.contextMenus.refresh(); } catch (e) {}
+      }
+
+      // If items are missing (service worker restarted before menus were created), rebuild then retry.
+      chrome.contextMenus.update(tabulazer.rootMenuId, { title: "Tabulazer" }, () => {
+        const e = chrome.runtime.lastError;
+        if (e && /cannot find|not found/i.test(e.message || "")) {
+          rebuildContextMenus();
+          // Give Chrome a tick to recreate, then apply.
+          setTimeout(applyUpdates, 50);
+          return;
+        }
+        applyUpdates();
+      });
     });
   });
 } catch (e) {}
@@ -245,9 +259,6 @@ function rebuildContextMenus() {
 try {
   chrome.runtime.onStartup.addListener(() => rebuildContextMenus());
 } catch (e) {}
-
-// Best-effort rebuild on service worker load (idempotent via removeAll).
-try { rebuildContextMenus(); } catch (e) {}
 
 // Important: create context menus in onInstalled (recommended & most reliable in MV3)
 chrome.runtime.onInstalled.addListener(() => {
