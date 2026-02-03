@@ -48,6 +48,137 @@ document.addEventListener(
   true
 );
 
+function listTables() {
+  try {
+    var tables = Array.prototype.slice.call(document.querySelectorAll("table"));
+    return tables.map(function (t, idx) {
+      var id = ensureTableId(t);
+      var rows = t.rows ? t.rows.length : 0;
+      var cols = 0;
+      try {
+        cols = t.rows && t.rows[0] ? t.rows[0].cells.length : 0;
+      } catch (e) {
+        cols = 0;
+      }
+      return {
+        id: id,
+        index: idx,
+        rows: rows,
+        cols: cols,
+      };
+    });
+  } catch (e) {
+    return [];
+  }
+}
+
+function stopPicker() {
+  if (!tabulazer._pickerActive) return;
+  tabulazer._pickerActive = false;
+
+  try {
+    document.removeEventListener("mousemove", tabulazer._pickerOnMove, true);
+    document.removeEventListener("click", tabulazer._pickerOnClick, true);
+    document.removeEventListener("keydown", tabulazer._pickerOnKeyDown, true);
+  } catch (e) {}
+
+  try {
+    if (tabulazer._pickerStyleEl && tabulazer._pickerStyleEl.parentNode) {
+      tabulazer._pickerStyleEl.parentNode.removeChild(tabulazer._pickerStyleEl);
+    }
+  } catch (e) {}
+
+  try {
+    if (tabulazer._pickerBadgeEl && tabulazer._pickerBadgeEl.parentNode) {
+      tabulazer._pickerBadgeEl.parentNode.removeChild(tabulazer._pickerBadgeEl);
+    }
+  } catch (e) {}
+
+  tabulazer._pickerStyleEl = null;
+  tabulazer._pickerBadgeEl = null;
+  tabulazer._pickerOnMove = null;
+  tabulazer._pickerOnClick = null;
+  tabulazer._pickerOnKeyDown = null;
+  tabulazer._pickerHoverEl = null;
+}
+
+function startPicker() {
+  if (tabulazer._pickerActive) return;
+  tabulazer._pickerActive = true;
+
+  // Style
+  var style = document.createElement("style");
+  style.id = "tabulazer-picker-style";
+  style.textContent = "\n" +
+    ".tabulazer-picker-hover{outline:3px solid #ff9800 !important; outline-offset:2px !important; cursor:crosshair !important;}\n" +
+    "#tabulazer-picker-badge{position:fixed; z-index:2147483647; top:10px; right:10px; background:#111; color:#fff; padding:8px 10px; font:12px/1.2 Arial,sans-serif; border-radius:6px; box-shadow:0 2px 10px rgba(0,0,0,.35);}\n" +
+    "#tabulazer-picker-badge strong{font-weight:700;}\n";
+  document.documentElement.appendChild(style);
+  tabulazer._pickerStyleEl = style;
+
+  var badge = document.createElement("div");
+  badge.id = "tabulazer-picker-badge";
+  badge.innerHTML = "<strong>Tabulazer</strong>: click a table to activate. Press ESC to cancel.";
+  document.documentElement.appendChild(badge);
+  tabulazer._pickerBadgeEl = badge;
+
+  function resolveTableFromTarget(target) {
+    if (!target || !target.closest) return null;
+
+    // If clicking inside an active Tabulator UI, map back to the original id.
+    var host = target.closest("[data-tabulazer-host-id]");
+    if (host) {
+      var hostId = host.getAttribute("data-tabulazer-host-id");
+      return { kind: "host", id: hostId, el: host };
+    }
+
+    var table = target.closest("table");
+    if (!table) return null;
+    return { kind: "table", id: ensureTableId(table), el: table };
+  }
+
+  tabulazer._pickerOnMove = function (ev) {
+    var hit = resolveTableFromTarget(ev.target);
+    var el = hit && hit.el;
+
+    if (tabulazer._pickerHoverEl && tabulazer._pickerHoverEl !== el) {
+      tabulazer._pickerHoverEl.classList.remove("tabulazer-picker-hover");
+    }
+    tabulazer._pickerHoverEl = el;
+    if (el) el.classList.add("tabulazer-picker-hover");
+  };
+
+  tabulazer._pickerOnClick = function (ev) {
+    var hit = resolveTableFromTarget(ev.target);
+    if (!hit || !hit.id) return;
+
+    ev.preventDefault();
+    ev.stopPropagation();
+
+    // Keep for context-menu flow too.
+    tabulazer.lastTableId = hit.id;
+
+    // Notify service worker to activate on this tab.
+    try {
+      chrome.runtime.sendMessage({ type: "pickerSelected", tableId: hit.id });
+    } catch (e) {
+      // Fallback: we can still store lastTableId; user can use the context menu.
+    }
+
+    stopPicker();
+  };
+
+  tabulazer._pickerOnKeyDown = function (ev) {
+    if (ev.key === "Escape") {
+      stopPicker();
+    }
+  };
+
+  document.addEventListener("mousemove", tabulazer._pickerOnMove, true);
+  document.addEventListener("click", tabulazer._pickerOnClick, true);
+  document.addEventListener("keydown", tabulazer._pickerOnKeyDown, true);
+}
+
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   // Backward compatible with old string-based messages.
   var kind = (typeof request === "string") ? request : (request && request.type);
@@ -61,6 +192,17 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     case "setInjected":
       tabulazer.isInjected = true;
       tabulazer.injectedVersion = (request && request.version) ? request.version : tabulazer.injectedVersion;
+      break;
+    case "listTables":
+      sendResponse({ tables: listTables() });
+      break;
+    case "startPicker":
+      startPicker();
+      sendResponse({ ok: true });
+      break;
+    case "stopPicker":
+      stopPicker();
+      sendResponse({ ok: true });
       break;
   }
 });

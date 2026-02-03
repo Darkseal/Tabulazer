@@ -98,10 +98,80 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
 
   chrome.tabs.sendMessage(tab.id, { type: "getLastTableTarget" }, (resp) => {
     const tableId = resp && resp.value ? resp.value.tableId : null;
-    if (!tableId) {
-      console.warn("Tabulazer: no table target captured (right-click was not on a table?)");
-      return;
-    }
+    // tableId may be null (e.g., right-click outside a table). In that case, we still
+    // try a "toggle last" fallback inside the page.
     renderTable(tab, tableId);
   });
+});
+
+function getActiveTab(callback) {
+  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    const tab = tabs && tabs[0];
+    callback(tab || null);
+  });
+}
+
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  const kind = request && request.type;
+
+  if (kind === "popupListTables") {
+    getActiveTab((tab) => {
+      if (!tab || !tab.id) {
+        sendResponse({ ok: false, error: "No active tab" });
+        return;
+      }
+      chrome.tabs.sendMessage(tab.id, { type: "listTables" }, (resp) => {
+        sendResponse({ ok: true, tables: (resp && resp.tables) ? resp.tables : [] });
+      });
+    });
+    return true;
+  }
+
+  if (kind === "popupStartPicker") {
+    getActiveTab((tab) => {
+      if (!tab || !tab.id) {
+        sendResponse({ ok: false, error: "No active tab" });
+        return;
+      }
+      chrome.tabs.sendMessage(tab.id, { type: "startPicker" }, () => {
+        sendResponse({ ok: true });
+      });
+    });
+    return true;
+  }
+
+  if (kind === "popupToggleLast") {
+    getActiveTab(async (tab) => {
+      if (!tab || !tab.id) {
+        sendResponse({ ok: false, error: "No active tab" });
+        return;
+      }
+      await renderTable(tab, null);
+      sendResponse({ ok: true });
+    });
+    return true;
+  }
+
+  if (kind === "activateById") {
+    const tableId = request && request.tableId;
+    getActiveTab(async (tab) => {
+      if (!tab || !tab.id) {
+        sendResponse({ ok: false, error: "No active tab" });
+        return;
+      }
+      await renderTable(tab, tableId);
+      sendResponse({ ok: true });
+    });
+    return true;
+  }
+
+  if (kind === "pickerSelected") {
+    // Content script notifies us of chosen table.
+    const tableId = request && request.tableId;
+    const tabId = sender && sender.tab ? sender.tab.id : null;
+    if (!tabId || !tableId) return;
+
+    const tab = { id: tabId };
+    renderTable(tab, tableId);
+  }
 });

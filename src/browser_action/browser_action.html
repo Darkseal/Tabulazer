@@ -43,6 +43,24 @@
         </div>
     </form>
     <hr />
+    <div class="mb-2">
+        <button type="button" class="btn btn-sm btn-primary" id="btnPick">Pick table…</button>
+        <button type="button" class="btn btn-sm btn-outline-secondary" id="btnToggleLast">Toggle last</button>
+        <button type="button" class="btn btn-sm btn-outline-secondary" id="btnRefresh">Refresh list</button>
+    </div>
+
+    <div class="help-panel mb-2">
+        Pick table shows an overlay: click a table to activate; press ESC to cancel.
+    </div>
+
+    <div class="card">
+        <div class="card-body p-2">
+            <div style="font-weight:600; font-size:0.9em;">Tables on this page</div>
+            <div id="tablesList" style="max-height:160px; overflow:auto; margin-top:6px;"></div>
+        </div>
+    </div>
+
+    <hr />
     <div class="help-panel">
         Use <strong>CTRL+C</strong> to copy/paste the table into CSV/Excel/GSheets
     </div>
