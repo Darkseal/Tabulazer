@@ -1,0 +1,19 @@
+{
+  "name": "tabulazer",
+  "private": true,
+  "version": "0.10.0",
+  "type": "module",
+  "scripts": {
+    "lint": "eslint .",
+    "build": "vite build",
+    "dev": "vite"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.0.263",
+    "@typescript-eslint/eslint-plugin": "^8.24.1",
+    "@typescript-eslint/parser": "^8.24.1",
+    "eslint": "^9.20.0",
+    "typescript": "^5.7.3",
+    "vite": "^6.1.0"
+  }
+}

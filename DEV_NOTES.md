@@ -6,6 +6,14 @@
 3. Click **Load unpacked**
 4. Select the repo folder: `.../Tabulazer` (this directory contains `manifest.json`)
 
+## Vite/TypeScript (Phase C scaffold)
+This repo now includes a Vite+TypeScript scaffold used to prepare the future refactor.
+It is **not wired into `manifest.json` yet**.
+
+Commands:
+- `npm install`
+- `npm run build` → outputs to `dist-vite/`
+
 ## Quick manual regression checklist
 Open any file in `test-pages/` in Chrome, then right-click inside the table and run:
 `Tabulazer - Table Filter and Sorter`

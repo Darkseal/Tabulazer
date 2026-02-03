@@ -1,0 +1,1 @@
+{"version":3,"file":"content.js","sources":["../src-ts/content.ts"],"sourcesContent":["// Vite/TS scaffold (not wired into manifest yet)\nexport {};\n\nconsole.log(\"Tabulazer content scaffold loaded (not wired)\");\n"],"names":[],"mappings":"AAGA,QAAQ,IAAI,+CAA+C"}
