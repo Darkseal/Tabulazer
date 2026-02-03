@@ -71,7 +71,9 @@ async function restoreOptions() {
         $("rememberLayout").checked = !!items.rememberLayout;
         $("compactMode").checked = !!items.compactMode;
         $("zebraRows").checked = !!items.zebraRows;
-        $("fontSize").value = String(items.fontSize || 100);
+        var fs = Number(items.fontSize || 100);
+        $("fontSize").value = String(fs);
+        try { $("fontSizeLabel").textContent = String(fs) + "%"; } catch (e) {}
 
         // Toggle quick filter UI
         var qWrap = document.getElementById("quick-filter-wrap");
@@ -297,6 +299,11 @@ async function wireEvents() {
   $("quickFilter").addEventListener("input", async function () {
     if (!$("quickFilterEnabled").checked) return;
     await sendMessage({ type: "setQuickFilter", query: $("quickFilter").value || "" });
+  });
+
+  // Keep font size label in sync while sliding
+  $("fontSize").addEventListener("input", function () {
+    try { $("fontSizeLabel").textContent = String($("fontSize").value || 100) + "%"; } catch (e) {}
   });
 
   // Auto-refresh when tab changes

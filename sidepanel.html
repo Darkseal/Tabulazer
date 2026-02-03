@@ -40,11 +40,20 @@
       <div class="hint">Tip: You can also right-click a page → Tabulazer: Toggle / Pick table.</div>
     </section>
 
-    <footer class="footer">
-      <div class="hint">Pick table shows an overlay: click a table to activate/deactivate; press ESC to cancel.</div>
-    </footer>
+    <footer class="footer"></footer>
 
     <section class="settings">
+      <div class="setting-row remember-row">
+        <div class="remember-label">
+          <div class="remember-title">Remember layout for this page</div>
+          <div class="remember-sub">Keeps filters/sorting/columns for this URL</div>
+        </div>
+        <label class="switch">
+          <input id="rememberLayout" type="checkbox" />
+          <span class="slider"></span>
+        </label>
+      </div>
+
       <div class="section-title">Settings</div>
       <div class="setting-row">
         <label class="checkbox">
@@ -92,12 +101,6 @@
         </label>
       </div>
 
-      <div class="setting-row">
-        <label class="checkbox">
-          <input id="rememberLayout" type="checkbox" />
-          <span>Remember layout for this page</span>
-        </label>
-      </div>
 
       <div class="setting-row">
         <label class="checkbox">
@@ -116,6 +119,7 @@
       <div class="setting-row">
         <label class="checkbox">
           <span>Font size</span>
+          <span id="fontSizeLabel" class="hint">100%</span>
         </label>
         <input id="fontSize" class="range" type="range" min="75" max="150" step="5" />
       </div>

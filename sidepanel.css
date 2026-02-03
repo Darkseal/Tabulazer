@@ -96,6 +96,30 @@ body {
   margin-top: 10px;
 }
 
+.remember-row {
+  padding-top: 2px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+  margin-bottom: 10px;
+}
+
+.remember-label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-right: 10px;
+}
+
+.remember-title {
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.remember-sub {
+  font-size: 12px;
+  opacity: 0.75;
+}
+
 .btn:disabled {
   opacity: 0.55;
   cursor: not-allowed;
