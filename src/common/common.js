@@ -105,17 +105,19 @@
   }
 
   function activate(tableId) {
+    // Toggle off if already active.
+    // IMPORTANT: when active, the original <table> has been replaced by the host div,
+    // so querying the DOM for the table will fail. We must check registry first.
+    if (registry[tableId] && registry[tableId].active) {
+      deactivate(tableId);
+      return;
+    }
+
     const selector = `table[data-tabulazer-table-id="${tableId}"]`;
     const $table = $(selector).first();
 
     if (!$table || $table.length === 0) {
       console.warn("Tabulazer: table not found for id", tableId);
-      return;
-    }
-
-    // Toggle off if already active
-    if (registry[tableId] && registry[tableId].active) {
-      deactivate(tableId);
       return;
     }
 
