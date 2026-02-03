@@ -24,8 +24,14 @@ async function renderTable(tab, tableId) {
 
 function injectScripts(tab) {
   return new Promise((resolve) => {
-    chrome.tabs.sendMessage(tab.id, "getInjected", (e2) => {
-      if (e2 && e2.value) {
+    const extVersion = chrome.runtime.getManifest().version;
+
+    chrome.tabs.sendMessage(tab.id, { type: "getInjected" }, (e2) => {
+      const injected = e2 && e2.value ? e2.value.injected : false;
+      const injectedVersion = e2 && e2.value ? e2.value.version : null;
+
+      // Re-inject if never injected, or if injected with a different extension version.
+      if (injected && injectedVersion === extVersion) {
         resolve();
         return;
       }
@@ -48,7 +54,7 @@ function injectScripts(tab) {
         }),
       ])
         .then(() => {
-          chrome.tabs.sendMessage(tab.id, "setInjected");
+          chrome.tabs.sendMessage(tab.id, { type: "setInjected", version: extVersion });
           resolve();
         })
         .catch((err) => {
@@ -70,7 +76,7 @@ chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.onClicked.addListener((info, tab) => {
     if (info.menuItemId !== tabulazer.menuItemId) return;
 
-    chrome.tabs.sendMessage(tab.id, "getLastTableTarget", (resp) => {
+    chrome.tabs.sendMessage(tab.id, { type: "getLastTableTarget" }, (resp) => {
       const tableId = resp && resp.value ? resp.value.tableId : null;
       if (!tableId) {
         console.warn(
