@@ -1,1 +1,0 @@
-{"version":3,"file":"worker.js","sources":["../src-ts/worker.ts"],"sourcesContent":["// Vite/TS scaffold (not wired into manifest yet)\nexport {};\n\nconsole.log(\"Tabulazer worker scaffold loaded (not wired)\");\n"],"names":[],"mappings":"AAGA,QAAQ,IAAI,8CAA8C"}
