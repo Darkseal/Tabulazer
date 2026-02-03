@@ -80,6 +80,19 @@ body {
   font-size: 13px;
 }
 
+.paging-row {
+  justify-content: flex-start;
+}
+
+.paging-row .checkbox {
+  width: 100%;
+  justify-content: space-between;
+}
+
+.paging-row .select {
+  margin-left: auto;
+}
+
 .select:disabled {
   opacity: 0.6;
 }
