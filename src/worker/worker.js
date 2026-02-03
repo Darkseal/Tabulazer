@@ -140,8 +140,8 @@ chrome.runtime.onInstalled.addListener(() => {
           { id: tabulazer.pickMenuId, title: "Pick Table" },
           { id: tabulazer.openPanelMenuId, title: "Open Side Panel" },
 
-          { id: tabulazer.copyRootMenuId, title: "Copy to Clipboard" },
-          { id: tabulazer.downloadRootMenuId, title: "Download as" },
+          { id: tabulazer.copyRootMenuId, title: "Copy Table to Clipboard" },
+          { id: tabulazer.downloadRootMenuId, title: "Download Table as" },
         ].forEach((item) => {
           chrome.contextMenus.create(
             {
