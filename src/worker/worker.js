@@ -131,11 +131,15 @@ try {
       const inTable = (!err && resp) ? !!resp.inTable : false;
 
       function applyUpdates() {
-        chrome.contextMenus.update(tabulazer.toggleMenuId, { enabled: inTable }, () => {
+        // DEBUG: also tweak titles so we can verify updates are applied visually.
+        const tTitle = inTable ? "Toggle Table" : "Toggle Table (disabled)";
+        const pTitle = inTable ? "Pick Table (disabled)" : "Pick Table";
+
+        chrome.contextMenus.update(tabulazer.toggleMenuId, { enabled: inTable, title: tTitle }, () => {
           const e = chrome.runtime.lastError;
           if (e) console.warn("Tabulazer: contextMenus.update(toggle)", e.message);
         });
-        chrome.contextMenus.update(tabulazer.pickMenuId, { enabled: !inTable }, () => {
+        chrome.contextMenus.update(tabulazer.pickMenuId, { enabled: !inTable, title: pTitle }, () => {
           const e = chrome.runtime.lastError;
           if (e) console.warn("Tabulazer: contextMenus.update(pick)", e.message);
         });
