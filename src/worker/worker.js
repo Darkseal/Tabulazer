@@ -2,6 +2,21 @@ const tabulazer = {
   menuItemId: "tabulazer-activate",
 };
 
+// Keep per-tab active state so the popup can show on/off toggles.
+// Key: tabId -> Set<tableId>
+const activeByTab = new Map();
+
+function setActive(tabId, tableId, active) {
+  if (!tabId || !tableId) return;
+  let set = activeByTab.get(tabId);
+  if (!set) {
+    set = new Set();
+    activeByTab.set(tabId, set);
+  }
+  if (active) set.add(tableId);
+  else set.delete(tableId);
+}
+
 function callToggle(tab, tableId) {
   chrome.scripting.executeScript({
     target: { tabId: tab.id },
@@ -30,6 +45,21 @@ function callToggle(tab, tableId) {
 async function renderTable(tab, tableId) {
   await injectScripts(tab);
   callToggle(tab, tableId);
+}
+
+function callDeactivateById(tab, tableId) {
+  chrome.scripting.executeScript({
+    target: { tabId: tab.id },
+    args: [tableId],
+    func: (tableIdArg) => {
+      if (!tableIdArg) return;
+      if (typeof window.tabulazerDeactivateById === "function") {
+        window.tabulazerDeactivateById(tableIdArg);
+      } else {
+        console.warn("Tabulazer: common.js not loaded (missing tabulazerDeactivateById)");
+      }
+    },
+  });
 }
 
 function injectScripts(tab) {
@@ -121,7 +151,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         return;
       }
       chrome.tabs.sendMessage(tab.id, { type: "listTables" }, (resp) => {
-        sendResponse({ ok: true, tables: (resp && resp.tables) ? resp.tables : [] });
+        const tables = (resp && resp.tables) ? resp.tables : [];
+        const activeSet = activeByTab.get(tab.id) || new Set();
+        const withState = tables.map((t) => ({ ...t, active: activeSet.has(t.id) }));
+        sendResponse({ ok: true, tables: withState });
       });
     });
     return true;
@@ -165,6 +198,20 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     return true;
   }
 
+  if (kind === "deactivateById") {
+    const tableId = request && request.tableId;
+    getActiveTab(async (tab) => {
+      if (!tab || !tab.id) {
+        sendResponse({ ok: false, error: "No active tab" });
+        return;
+      }
+      await injectScripts(tab);
+      callDeactivateById(tab, tableId);
+      sendResponse({ ok: true });
+    });
+    return true;
+  }
+
   if (kind === "pickerSelected") {
     // Content script notifies us of chosen table.
     const tableId = request && request.tableId;
@@ -173,5 +220,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
     const tab = { id: tabId };
     renderTable(tab, tableId);
+    return;
+  }
+
+  if (kind === "tabulazerStatus") {
+    const tabId = sender && sender.tab ? sender.tab.id : null;
+    const tableId = request && request.tableId;
+    const active = !!(request && request.active);
+    setActive(tabId, tableId, active);
   }
 });

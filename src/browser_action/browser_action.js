@@ -39,13 +39,20 @@ function renderTables(tables) {
     }
 
     tables.forEach(function(t) {
-        var label = "#" + (t.index + 1) + " — " + (t.rows || 0) + "x" + (t.cols || 0);
+        var state = t.active ? "ON" : "OFF";
+        var label = "#" + (t.index + 1) + " — " + (t.rows || 0) + "x" + (t.cols || 0) + " — " + state;
+
         var $btn = $("<button/>")
-            .addClass("btn btn-sm btn-light btn-block text-left")
+            .addClass("btn btn-sm btn-block text-left")
+            .addClass(t.active ? "btn-success" : "btn-light")
             .css({ marginTop: "4px" })
             .text(label)
             .on("click", function() {
-                chrome.runtime.sendMessage({ type: "activateById", tableId: t.id });
+                if (t.active) {
+                    chrome.runtime.sendMessage({ type: "deactivateById", tableId: t.id });
+                } else {
+                    chrome.runtime.sendMessage({ type: "activateById", tableId: t.id });
+                }
                 window.close();
             });
         $list.append($btn);
