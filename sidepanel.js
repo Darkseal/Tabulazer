@@ -95,6 +95,25 @@ function renderTables(tables) {
     label.className = "table-label";
     label.textContent = "#" + (t.index + 1) + " — " + (t.rows || 0) + "x" + (t.cols || 0);
 
+    var btnSelect = document.createElement("button");
+    btnSelect.className = "btn btn-ghost btn-mini";
+    btnSelect.type = "button";
+    btnSelect.textContent = "Select";
+
+    btnSelect.addEventListener("click", async function () {
+      btnSelect.disabled = true;
+      setStatus("Selecting...");
+
+      var resp = await sendMessage({ type: "popupSelectById", tableId: t.id });
+      if (resp && resp.ok === false && resp.error) {
+        setStatus(resp.error);
+      } else {
+        setStatus("");
+      }
+
+      btnSelect.disabled = false;
+    });
+
     var sw = document.createElement("label");
     sw.className = "switch";
 
@@ -125,6 +144,7 @@ function renderTables(tables) {
     });
 
     row.appendChild(label);
+    row.appendChild(btnSelect);
     row.appendChild(sw);
     list.appendChild(row);
   });

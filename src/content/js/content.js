@@ -117,6 +117,43 @@ function stopPicker() {
   tabulazer._pickerHoverEl = null;
 }
 
+function flashSelect(el) {
+  if (!el || !el.classList) return;
+
+  // Reuse picker styles if present; otherwise add our own.
+  var styleId = "tabulazer-select-style";
+  if (!document.getElementById(styleId)) {
+    var st = document.createElement("style");
+    st.id = styleId;
+    st.textContent = "\n" +
+      ".tabulazer-select-flash{outline:3px solid #60a5fa !important; outline-offset:2px !important;}\n";
+    document.documentElement.appendChild(st);
+  }
+
+  el.classList.add("tabulazer-select-flash");
+  setTimeout(function () {
+    try { el.classList.remove("tabulazer-select-flash"); } catch (e) {}
+  }, 1400);
+}
+
+function selectTableById(tableId) {
+  if (!tableId) return false;
+
+  var host = document.querySelector('[data-tabulazer-host-id="' + tableId + '"]');
+  var table = document.querySelector('table[data-tabulazer-table-id="' + tableId + '"]');
+  var el = host || table;
+  if (!el) return false;
+
+  try {
+    el.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
+  } catch (e) {
+    try { el.scrollIntoView(); } catch (e2) {}
+  }
+
+  flashSelect(el);
+  return true;
+}
+
 function startPicker() {
   if (tabulazer._pickerActive) return;
   tabulazer._pickerActive = true;
@@ -223,6 +260,10 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     case "stopPicker":
       stopPicker();
       sendResponse({ ok: true });
+      break;
+    case "selectTable":
+      var ok = selectTableById(request && request.tableId);
+      sendResponse({ ok: ok });
       break;
   }
 });

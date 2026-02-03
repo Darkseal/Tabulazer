@@ -144,6 +144,13 @@ body {
   word-break: break-word;
 }
 
+.btn-mini {
+  padding: 6px 10px;
+  border-radius: 9px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
 /* iOS-like switch */
 .switch {
   position: relative;

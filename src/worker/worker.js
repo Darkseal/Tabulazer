@@ -1,6 +1,8 @@
 const tabulazer = {
-  menuItemId: "tabulazer-toggle",
-  pickMenuItemId: "tabulazer-pick",
+  rootMenuId: "tabulazer-root",
+  toggleMenuId: "tabulazer-toggle",
+  pickMenuId: "tabulazer-pick",
+  openPanelMenuId: "tabulazer-open-panel",
 };
 
 function callToggle(tab, tableId) {
@@ -98,35 +100,47 @@ chrome.runtime.onInstalled.addListener(() => {
       chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
     }
   } catch (e) {}
-  chrome.contextMenus.create(
-    {
-      id: tabulazer.menuItemId,
-      type: "normal",
-      title: "Tabulazer: Toggle table",
-      contexts: ["page"],
-    },
-    () => {
-      const err = chrome.runtime.lastError;
-      if (err && !/duplicate/i.test(err.message || "")) {
-        console.warn("Tabulazer: contextMenus.create", err.message);
-      }
-    }
-  );
 
-  chrome.contextMenus.create(
-    {
-      id: tabulazer.pickMenuItemId,
-      type: "normal",
-      title: "Tabulazer: Pick table...",
-      contexts: ["page"],
-    },
-    () => {
-      const err = chrome.runtime.lastError;
-      if (err && !/duplicate/i.test(err.message || "")) {
-        console.warn("Tabulazer: contextMenus.create", err.message);
+  // Rebuild context menus (avoids duplicates across reloads/updates).
+  chrome.contextMenus.removeAll(() => {
+    chrome.contextMenus.create(
+      {
+        id: tabulazer.rootMenuId,
+        type: "normal",
+        title: "Tabulazer",
+        contexts: ["page"],
+      },
+      () => {
+        const err = chrome.runtime.lastError;
+        if (err && !/duplicate/i.test(err.message || "")) {
+          console.warn("Tabulazer: contextMenus.create(root)", err.message);
+        }
+
+        // Children
+        [
+          { id: tabulazer.toggleMenuId, title: "Toggle Table" },
+          { id: tabulazer.pickMenuId, title: "Pick Table" },
+          { id: tabulazer.openPanelMenuId, title: "Open Side Panel" },
+        ].forEach((item) => {
+          chrome.contextMenus.create(
+            {
+              id: item.id,
+              parentId: tabulazer.rootMenuId,
+              type: "normal",
+              title: item.title,
+              contexts: ["page"],
+            },
+            () => {
+              const e2 = chrome.runtime.lastError;
+              if (e2 && !/duplicate/i.test(e2.message || "")) {
+                console.warn("Tabulazer: contextMenus.create(child)", item.id, e2.message);
+              }
+            }
+          );
+        });
       }
-    }
-  );
+    );
+  });
 });
 
 async function openSidePanelForTab(tabId) {
@@ -147,14 +161,22 @@ chrome.action.onClicked.addListener(async (tab) => {
 chrome.contextMenus.onClicked.addListener((info, tab) => {
   if (!tab || !tab.id) return;
 
-  if (info.menuItemId === tabulazer.pickMenuItemId) {
-    // Start overlay picker and open the side panel for quick access to controls.
+  if (info.menuItemId === tabulazer.openPanelMenuId) {
     openSidePanelForTab(tab.id);
-    chrome.tabs.sendMessage(tab.id, { type: "startPicker" }, () => {});
     return;
   }
 
-  if (info.menuItemId !== tabulazer.menuItemId) return;
+  if (info.menuItemId === tabulazer.pickMenuId) {
+    // Start overlay picker and open the side panel for quick access to controls.
+    openSidePanelForTab(tab.id);
+    chrome.tabs.sendMessage(tab.id, { type: "startPicker" }, () => {
+      const err = chrome.runtime.lastError;
+      if (err) console.warn("Tabulazer: startPicker failed", err.message);
+    });
+    return;
+  }
+
+  if (info.menuItemId !== tabulazer.toggleMenuId) return;
 
   openSidePanelForTab(tab.id);
   chrome.tabs.sendMessage(tab.id, { type: "getLastTableTarget" }, (resp) => {
@@ -197,8 +219,14 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         sendResponse({ ok: false, error: "No active tab" });
         return;
       }
+      openSidePanelForTab(tab.id);
       chrome.tabs.sendMessage(tab.id, { type: "startPicker" }, () => {
-        sendResponse({ ok: true });
+        const err = chrome.runtime.lastError;
+        if (err) {
+          sendResponse({ ok: false, error: err.message || "Unable to start picker" });
+        } else {
+          sendResponse({ ok: true });
+        }
       });
     });
     return true;
@@ -210,8 +238,32 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         sendResponse({ ok: false, error: "No active tab" });
         return;
       }
+      openSidePanelForTab(tab.id);
       await renderTable(tab, null);
       sendResponse({ ok: true });
+    });
+    return true;
+  }
+
+  if (kind === "popupSelectById") {
+    const tableId = request && request.tableId;
+    getActiveTab((tab) => {
+      if (!tab || !tab.id) {
+        sendResponse({ ok: false, error: "No active tab" });
+        return;
+      }
+      chrome.tabs.sendMessage(tab.id, { type: "selectTable", tableId: tableId }, (resp) => {
+        const err = chrome.runtime.lastError;
+        if (err) {
+          sendResponse({ ok: false, error: err.message || "Unable to select table" });
+          return;
+        }
+        if (resp && resp.ok) {
+          sendResponse({ ok: true });
+        } else {
+          sendResponse({ ok: false, error: "Table not found on this page." });
+        }
+      });
     });
     return true;
   }
