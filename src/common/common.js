@@ -130,6 +130,9 @@
     // Create host and replace the table
     const host = document.createElement("div");
     host.setAttribute("data-tabulazer-host-id", tableId);
+    // Keep some metadata so the popup can still list this entry after the <table> is replaced.
+    host.setAttribute("data-tabulazer-rows", String(parsed.data.length));
+    host.setAttribute("data-tabulazer-cols", String(parsed.columns.length));
     host.style.minHeight = "120px";
 
     const tableEl = $table.get(0);

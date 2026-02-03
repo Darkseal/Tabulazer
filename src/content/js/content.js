@@ -50,23 +50,38 @@ document.addEventListener(
 
 function listTables() {
   try {
-    var tables = Array.prototype.slice.call(document.querySelectorAll("table"));
-    return tables.map(function (t, idx) {
-      var id = ensureTableId(t);
-      var rows = t.rows ? t.rows.length : 0;
-      var cols = 0;
-      try {
-        cols = t.rows && t.rows[0] ? t.rows[0].cells.length : 0;
-      } catch (e) {
-        cols = 0;
+    // Include both real tables and active Tabulazer hosts (tables replaced by Tabulator).
+    var nodes = Array.prototype.slice.call(
+      document.querySelectorAll("table, [data-tabulazer-host-id]")
+    );
+
+    var out = [];
+    nodes.forEach(function (node, idx) {
+      // Active (host)
+      if (node && node.getAttribute && node.hasAttribute("data-tabulazer-host-id")) {
+        var hid = node.getAttribute("data-tabulazer-host-id");
+        if (!hid) return;
+        var hRows = Number(node.getAttribute("data-tabulazer-rows") || 0);
+        var hCols = Number(node.getAttribute("data-tabulazer-cols") || 0);
+        out.push({ id: hid, index: idx, rows: hRows, cols: hCols });
+        return;
       }
-      return {
-        id: id,
-        index: idx,
-        rows: rows,
-        cols: cols,
-      };
+
+      // Normal table
+      if (node && node.tagName && node.tagName.toLowerCase() === "table") {
+        var id = ensureTableId(node);
+        var rows = node.rows ? node.rows.length : 0;
+        var cols = 0;
+        try {
+          cols = node.rows && node.rows[0] ? node.rows[0].cells.length : 0;
+        } catch (e) {
+          cols = 0;
+        }
+        out.push({ id: id, index: idx, rows: rows, cols: cols });
+      }
     });
+
+    return out;
   } catch (e) {
     return [];
   }
