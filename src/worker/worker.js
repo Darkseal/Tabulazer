@@ -143,15 +143,7 @@ try {
   });
 } catch (e) {}
 
-// Important: create context menus in onInstalled (recommended & most reliable in MV3)
-chrome.runtime.onInstalled.addListener(() => {
-  // Prefer opening the side panel when the user clicks the action button.
-  try {
-    if (chrome.sidePanel && chrome.sidePanel.setPanelBehavior) {
-      chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
-    }
-  } catch (e) {}
-
+function rebuildContextMenus() {
   // Rebuild context menus (avoids duplicates across reloads/updates).
   chrome.contextMenus.removeAll(() => {
     chrome.contextMenus.create(
@@ -247,6 +239,27 @@ chrome.runtime.onInstalled.addListener(() => {
       }
     );
   });
+}
+
+// Ensure context menus exist even after service worker restarts.
+try {
+  chrome.runtime.onStartup.addListener(() => rebuildContextMenus());
+} catch (e) {}
+
+// Best-effort rebuild on service worker load (idempotent via removeAll).
+try { rebuildContextMenus(); } catch (e) {}
+
+// Important: create context menus in onInstalled (recommended & most reliable in MV3)
+chrome.runtime.onInstalled.addListener(() => {
+  // Prefer opening the side panel when the user clicks the action button.
+  try {
+    if (chrome.sidePanel && chrome.sidePanel.setPanelBehavior) {
+      chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
+    }
+  } catch (e) {}
+
+  // Rebuild context menus (avoids duplicates across reloads/updates).
+  rebuildContextMenus();
 });
 
 async function openSidePanelForTab(tabId) {
