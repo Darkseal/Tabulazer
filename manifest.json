@@ -1,6 +1,6 @@
 {
   "name": "Tabulazer - Table Filter and Sorter",
-  "version": "0.13.19",
+  "version": "0.13.20",
   "manifest_version": 3,
   "description": "Filter, sort, page and style any existing HTML table using the Tabulator JS library.",
   "default_locale": "en",
@@ -24,6 +24,7 @@
   "content_scripts": [
     {
       "matches": [ "<all_urls>" ],
+      "all_frames": true,
       "css": [],
       "js": [ "src/content/js/content.js" ]
     }

@@ -124,7 +124,9 @@ try {
     const tabId = (tab && tab.id) || (info && info.tabId);
     if (!tabId) return;
 
-    chrome.tabs.sendMessage(tabId, { type: "getContextInfo" }, (resp) => {
+    const frameId = (info && typeof info.frameId === "number") ? info.frameId : 0;
+
+    chrome.tabs.sendMessage(tabId, { type: "getContextInfo" }, { frameId }, (resp) => {
       const err = chrome.runtime.lastError;
       const inTable = (!err && resp) ? !!resp.inTable : false;
 
@@ -147,7 +149,6 @@ try {
         const e = chrome.runtime.lastError;
         if (e && /cannot find|not found/i.test(e.message || "")) {
           rebuildContextMenus();
-          // Give Chrome a tick to recreate, then apply.
           setTimeout(applyUpdates, 50);
           return;
         }
@@ -175,9 +176,9 @@ function rebuildContextMenus() {
 
         // Children
         [
-          { id: tabulazer.toggleMenuId, title: "Toggle Table", enabled: false },
-          { id: tabulazer.pickMenuId, title: "Pick Table", enabled: true },
-          { id: tabulazer.openPanelMenuId, title: "Open Side Panel", enabled: true },
+          { id: tabulazer.toggleMenuId, title: "Toggle Table" },
+          { id: tabulazer.pickMenuId, title: "Pick Table" },
+          { id: tabulazer.openPanelMenuId, title: "Open Side Panel" },
 
           { id: tabulazer.copyRootMenuId, title: "Copy Table to Clipboard" },
           { id: tabulazer.downloadRootMenuId, title: "Download Table as" },
@@ -188,7 +189,6 @@ function rebuildContextMenus() {
               parentId: tabulazer.rootMenuId,
               type: "normal",
               title: item.title,
-              enabled: (item.enabled !== undefined) ? item.enabled : true,
               contexts: ["page"],
             },
             () => {
