@@ -24,7 +24,22 @@ document.addEventListener(
   "contextmenu",
   function (event) {
     try {
-      var table = event.target && event.target.closest ? event.target.closest("table") : null;
+      var target = event.target;
+      if (!target || !target.closest) {
+        tabulazer.lastTableId = null;
+        return;
+      }
+
+      // If the table has been replaced by Tabulazer, right-clicks happen inside the Tabulator UI.
+      // In that case, resolve the tableId from the host container.
+      var host = target.closest("[data-tabulazer-host-id]");
+      if (host) {
+        tabulazer.lastTableId = host.getAttribute("data-tabulazer-host-id") || null;
+        return;
+      }
+
+      // Otherwise resolve the nearest real table.
+      var table = target.closest("table");
       tabulazer.lastTableId = ensureTableId(table);
     } catch (e) {
       tabulazer.lastTableId = null;
