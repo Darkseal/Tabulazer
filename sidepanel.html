@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tabulazer</title>
+  <link rel="stylesheet" href="sidepanel.css" />
+</head>
+<body>
+  <main class="panel">
+    <header class="header">
+      <div>
+        <div class="title">Tabulazer</div>
+        <div id="tab-meta" class="subtitle">—</div>
+      </div>
+      <div class="header-actions">
+        <button id="btn-refresh" class="btn btn-ghost" type="button">Refresh</button>
+      </div>
+    </header>
+
+    <section class="actions">
+      <button id="btn-pick" class="btn btn-primary" type="button">Pick table</button>
+      <button id="btn-toggle-last" class="btn btn-secondary" type="button">Toggle last</button>
+      <button id="btn-deactivate-all" class="btn btn-danger" type="button">Deactivate all</button>
+    </section>
+
+    <section class="status">
+      <div id="status-msg" class="status-msg"></div>
+    </section>
+
+    <section class="settings">
+      <div class="section-title">Settings</div>
+      <div class="setting-row">
+        <label class="checkbox">
+          <input id="forceWidth" type="checkbox" />
+          <span>Force table width to 100%</span>
+        </label>
+      </div>
+      <div class="setting-row">
+        <label class="checkbox">
+          <input id="sorting" type="checkbox" />
+          <span>Enable sorting</span>
+        </label>
+      </div>
+      <div class="setting-row">
+        <label class="checkbox">
+          <input id="filters" type="checkbox" />
+          <span>Enable column filters</span>
+        </label>
+      </div>
+      <div class="setting-row">
+        <label class="checkbox">
+          <input id="paging" type="checkbox" />
+          <span>Enable paging</span>
+        </label>
+      </div>
+    </section>
+
+    <section class="tables">
+      <div class="section-title">Tables</div>
+      <div id="tables-list" class="tables-list"></div>
+      <div class="hint">Tip: You can also right-click a page → Tabulazer: Toggle / Pick table.</div>
+    </section>
+
+    <footer class="footer">
+      <div class="hint">Pick table shows an overlay: click a table to activate/deactivate; press ESC to cancel.</div>
+      <div class="hint">Use CTRL+C to copy/paste the table into CSV/Excel/GSheets.</div>
+    </footer>
+  </main>
+
+  <script src="sidepanel.js"></script>
+</body>
+</html>

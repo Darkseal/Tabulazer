@@ -92,6 +92,12 @@ function injectScripts(tab) {
 
 // Important: create context menus in onInstalled (recommended & most reliable in MV3)
 chrome.runtime.onInstalled.addListener(() => {
+  // Prefer opening the side panel when the user clicks the action button.
+  try {
+    if (chrome.sidePanel && chrome.sidePanel.setPanelBehavior) {
+      chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
+    }
+  } catch (e) {}
   chrome.contextMenus.create(
     {
       id: tabulazer.menuItemId,
@@ -121,6 +127,16 @@ chrome.runtime.onInstalled.addListener(() => {
       }
     }
   );
+});
+
+chrome.action.onClicked.addListener(async (tab) => {
+  try {
+    if (tab && tab.id && chrome.sidePanel && chrome.sidePanel.open) {
+      await chrome.sidePanel.open({ tabId: tab.id });
+    }
+  } catch (e) {
+    // ignore
+  }
 });
 
 chrome.contextMenus.onClicked.addListener((info, tab) => {
@@ -216,6 +232,30 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       await injectScripts(tab);
       callDeactivateById(tab, tableId);
       sendResponse({ ok: true });
+    });
+    return true;
+  }
+
+  if (kind === "deactivateAll") {
+    getActiveTab(async (tab) => {
+      if (!tab || !tab.id) {
+        sendResponse({ ok: false, error: "No active tab" });
+        return;
+      }
+
+      // List tables/hosts from the page and deactivate all active hosts.
+      chrome.tabs.sendMessage(tab.id, { type: "listTables" }, async (resp) => {
+        const tables = (resp && resp.tables) ? resp.tables : [];
+        const active = tables.filter((t) => t && t.active);
+
+        await injectScripts(tab);
+
+        active.forEach((t) => {
+          callDeactivateById(tab, t.id);
+        });
+
+        sendResponse({ ok: true, count: active.length });
+      });
     });
     return true;
   }
