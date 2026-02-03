@@ -152,8 +152,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       }
       chrome.tabs.sendMessage(tab.id, { type: "listTables" }, (resp) => {
         const tables = (resp && resp.tables) ? resp.tables : [];
-        const activeSet = activeByTab.get(tab.id) || new Set();
-        const withState = tables.map((t) => ({ ...t, active: activeSet.has(t.id) }));
+        // Prefer DOM-derived state from the content script (host divs == active).
+        // This avoids desync when the service worker is restarted or status messages are missed.
+        const withState = tables.map((t) => ({ ...t, active: !!t.active }));
         sendResponse({ ok: true, tables: withState });
       });
     });

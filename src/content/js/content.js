@@ -63,7 +63,7 @@ function listTables() {
         if (!hid) return;
         var hRows = Number(node.getAttribute("data-tabulazer-rows") || 0);
         var hCols = Number(node.getAttribute("data-tabulazer-cols") || 0);
-        out.push({ id: hid, index: idx, rows: hRows, cols: hCols });
+        out.push({ id: hid, index: idx, rows: hRows, cols: hCols, active: true });
         return;
       }
 
@@ -77,7 +77,7 @@ function listTables() {
         } catch (e) {
           cols = 0;
         }
-        out.push({ id: id, index: idx, rows: rows, cols: cols });
+        out.push({ id: id, index: idx, rows: rows, cols: cols, active: false });
       }
     });
 
