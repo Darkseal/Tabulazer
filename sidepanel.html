@@ -42,7 +42,7 @@
 
     <footer class="footer"></footer>
 
-    <section class="settings">
+    <section class="remember">
       <div class="setting-row remember-row">
         <div class="remember-label">
           <div class="remember-title">Remember layout for this page</div>
@@ -53,7 +53,9 @@
           <span class="slider"></span>
         </label>
       </div>
+    </section>
 
+    <section class="settings">
       <div class="section-title">Settings</div>
       <div class="setting-row">
         <label class="checkbox">
@@ -120,9 +122,11 @@
       <div class="setting-row">
         <label class="checkbox">
           <span>Font size</span>
-          <span id="fontSizeLabel" class="hint">100%</span>
         </label>
-        <input id="fontSize" class="range" type="range" min="75" max="150" step="5" />
+        <div class="font-size-control">
+          <span id="fontSizeLabel" class="hint">100%</span>
+          <input id="fontSize" class="range" type="range" min="75" max="150" step="5" value="100" />
+        </div>
       </div>
 
       <div class="shortcuts">

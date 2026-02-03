@@ -88,6 +88,18 @@ body {
   width: 120px;
 }
 
+.font-size-control {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+#fontSizeLabel {
+  min-width: 44px;
+  text-align: right;
+}
+
 .quick-filter {
   margin: 6px 0 10px;
 }
@@ -98,9 +110,7 @@ body {
 
 .remember-row {
   padding-top: 2px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.25);
-  margin-bottom: 10px;
+  padding-bottom: 2px;
 }
 
 .remember-label {
@@ -112,7 +122,7 @@ body {
 
 .remember-title {
   font-size: 14px;
-  font-weight: 800;
+  font-weight: bold;
 }
 
 .remember-sub {
@@ -156,7 +166,7 @@ body {
   opacity: 0.9;
 }
 
-.settings, .tables {
+.settings, .tables, .remember {
   border: 1px solid rgba(148, 163, 184, 0.25);
   border-radius: 12px;
   padding: 10px;
