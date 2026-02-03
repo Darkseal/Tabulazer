@@ -43,7 +43,10 @@
       if ($cells.length === 0) return;
       const obj = {};
       $cells.each(function (idx, cell) {
-        obj["c" + idx] = $(cell).text().trim();
+        // Preserve cell HTML so links/buttons remain usable in the Tabulator view.
+        // Tabulator will render this via formatter:"html".
+        const html = (cell && cell.innerHTML != null) ? cell.innerHTML : $(cell).text();
+        obj["c" + idx] = (html || "").trim();
       });
       data.push(obj);
     });
