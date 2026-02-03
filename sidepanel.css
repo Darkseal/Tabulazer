@@ -86,11 +86,11 @@ body {
 
 .paging-row .checkbox {
   width: 100%;
-  justify-content: space-between;
+  justify-content: flex-start;
 }
 
 .paging-row .select {
-  margin-left: auto;
+  margin-left: 10px;
 }
 
 .select:disabled {
