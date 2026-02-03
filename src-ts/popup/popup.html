@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="/lib/bootstrap/4.3.1/css/bootstrap.min.css" />
+  <style>
+    body { background:#f3f5f5; font-size:14px; }
+    .main-panel { padding: 5px 10px; min-width: 330px; }
+    .help-panel { text-align:left; font-size:0.8em; }
+    .table-row { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:6px; padding:6px 8px; border:1px solid rgba(0,0,0,.08); border-radius:6px; background:#fff; }
+    .table-row.on { background:#e8f5e9; }
+  </style>
+</head>
+<body>
+  <div class="main-panel">
+    <h5>Tabulazer</h5>
+    <p>Filter, sort, page and style HTML tables.</p>
+    <hr />
+
+    <form class="form" id="settingsForm">
+      <div class="form-group">
+        <div class="custom-control custom-checkbox">
+          <input type="checkbox" class="custom-control-input" id="forceWidth">
+          <label class="custom-control-label" for="forceWidth">Force table width to 100%</label>
+        </div>
+        <div class="custom-control custom-checkbox">
+          <input type="checkbox" class="custom-control-input" id="sorting">
+          <label class="custom-control-label" for="sorting">Enable sorting</label>
+        </div>
+        <div class="custom-control custom-checkbox">
+          <input type="checkbox" class="custom-control-input" id="filters">
+          <label class="custom-control-label" for="filters">Enable column filters</label>
+        </div>
+        <div class="custom-control custom-checkbox">
+          <input type="checkbox" class="custom-control-input" id="paging">
+          <label class="custom-control-label" for="paging">Enable paging</label>
+        </div>
+      </div>
+    </form>
+
+    <hr />
+
+    <div class="mb-2">
+      <button type="button" class="btn btn-sm btn-primary" id="btnPick">Pick table...</button>
+      <button type="button" class="btn btn-sm btn-outline-secondary" id="btnToggleLast">Toggle last</button>
+      <button type="button" class="btn btn-sm btn-outline-secondary" id="btnRefresh">Refresh list</button>
+    </div>
+
+    <div class="help-panel mb-2">
+      Pick table shows an overlay: click a table to activate; press ESC to cancel.
+    </div>
+
+    <div class="card">
+      <div class="card-body p-2">
+        <div style="font-weight:600; font-size:0.9em;">Tables on this page</div>
+        <div id="tablesList" style="max-height:160px; overflow:auto; margin-top:6px;"></div>
+      </div>
+    </div>
+
+    <hr />
+    <div class="help-panel">
+      Use <strong>CTRL+C</strong> to copy/paste the table into CSV/Excel/GSheets
+    </div>
+  </div>
+
+  <script src="./popup.js"></script>
+</body>
+</html>

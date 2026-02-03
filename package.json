@@ -6,7 +6,9 @@
   "scripts": {
     "lint": "eslint .",
     "build": "vite build",
-    "dev": "vite"
+    "dev": "vite",
+    "build:ext": "vite build -c vite.extension.config.ts",
+    "build:dist-chrome": "bash scripts/build_dist_chrome.sh"
   },
   "devDependencies": {
     "@types/chrome": "^0.0.263",
