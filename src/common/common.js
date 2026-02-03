@@ -63,6 +63,12 @@
           filters: true,
           paging: true,
           pageSize: 100,
+          quickFilter: false,
+          columnChooser: false,
+          rememberLayout: false,
+          compactMode: false,
+          zebraRows: false,
+          fontSize: 100,
         },
         (items) => resolve(items)
       );
@@ -90,10 +96,20 @@
       layout: "fitColumns",
       movableColumns: false,
       columnDefaults,
-      clipboard: true,
-      clipboardCopyRowRange: "all",
-      clipboardCopyStyled: false,
+      // Clipboard shortcuts removed in favor of explicit Copy/Download actions.
+      clipboard: false,
     };
+
+    // Remember layout (per page)
+    if (items.rememberLayout) {
+      const pid = "tabulazer:" + location.origin + location.pathname + location.search;
+      options.persistence = {
+        sort: true,
+        filter: true,
+        columns: true,
+      };
+      options.persistenceID = pid;
+    }
 
     if (items.paging) {
       options.pagination = true;
@@ -102,6 +118,52 @@
     }
 
     return options;
+  }
+
+  let currentQuickFilter = "";
+
+  function applyVisualPrefs(host, items) {
+    if (!host) return;
+
+    try {
+      host.classList.toggle("tabulazer-compact", !!items.compactMode);
+      host.classList.toggle("tabulazer-zebra", !!items.zebraRows);
+      const fs = Number(items.fontSize || 100);
+      host.style.setProperty("--tabulazer-font-scale", String(fs / 100));
+    } catch (e) {}
+  }
+
+  function applyQuickFilterToInstance(instance) {
+    try {
+      if (!instance || typeof instance.setFilter !== "function") return;
+
+      const q = (currentQuickFilter || "").trim().toLowerCase();
+      if (!q) {
+        // Clear any previous filter.
+        if (typeof instance.clearFilter === "function") instance.clearFilter(true);
+        return;
+      }
+
+      instance.setFilter(function (rowData) {
+        try {
+          const vals = Object.values(rowData || {});
+          for (let i = 0; i < vals.length; i++) {
+            const s = (vals[i] == null) ? "" : String(vals[i]);
+            if (s.toLowerCase().includes(q)) return true;
+          }
+        } catch (e) {}
+        return false;
+      });
+    } catch (e) {}
+  }
+
+  function applyQuickFilterToAll() {
+    Object.keys(registry).forEach((id) => {
+      const entry = registry[id];
+      if (entry && entry.active && entry.instance) {
+        applyQuickFilterToInstance(entry.instance);
+      }
+    });
   }
 
   function activate(tableId) {
@@ -143,6 +205,8 @@
         host.style.width = "100%";
       }
 
+      applyVisualPrefs(host, items);
+
       const options = buildTabulatorOptions(items, parsed.columns, parsed.data);
 
       const instance = new Tabulator(host, options);
@@ -153,6 +217,11 @@
         originalHtml,
         instance,
       };
+
+      // Apply quick filter if enabled (it will be a no-op if empty)
+      if (items.quickFilter) {
+        applyQuickFilterToInstance(instance);
+      }
     });
   }
 
@@ -209,7 +278,29 @@
     return null;
   };
 
+  window.tabulazerGetInstanceById = function (tableId) {
+    const entry = registry[tableId];
+    if (entry && entry.active && entry.instance) return entry.instance;
+    return null;
+  };
+
   window.tabulazerGetLastActivatedId = function () {
     return lastActivatedId || null;
+  };
+
+  window.tabulazerSetQuickFilter = function (q) {
+    currentQuickFilter = (q == null) ? "" : String(q);
+    applyQuickFilterToAll();
+  };
+
+  window.tabulazerApplyVisualPrefs = function () {
+    getSettings().then((items) => {
+      Object.keys(registry).forEach((id) => {
+        const entry = registry[id];
+        if (entry && entry.active && entry.host) {
+          applyVisualPrefs(entry.host, items);
+        }
+      });
+    });
   };
 })();

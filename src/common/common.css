@@ -1,3 +1,21 @@
 .tabulator-row .tabulator-cell {
 	white-space: normal;
 }
+
+/* Visual prefs applied to the Tabulator host */
+[data-tabulazer-host-id] {
+	--tabulazer-font-scale: 1;
+}
+
+[data-tabulazer-host-id] .tabulator {
+	font-size: calc(14px * var(--tabulazer-font-scale));
+}
+
+[data-tabulazer-host-id].tabulazer-compact .tabulator-row .tabulator-cell {
+	padding-top: 2px;
+	padding-bottom: 2px;
+}
+
+[data-tabulazer-host-id].tabulazer-zebra .tabulator-row:nth-child(even) {
+	background: rgba(148, 163, 184, 0.12);
+}

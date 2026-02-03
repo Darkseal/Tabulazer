@@ -31,6 +31,11 @@
 
     <section class="tables">
       <div class="section-title">Tables</div>
+
+      <div id="quick-filter-wrap" class="quick-filter" style="display:none;">
+        <input id="quickFilter" class="input" type="search" placeholder="Quick filter..." />
+      </div>
+
       <div id="tables-list" class="tables-list"></div>
       <div class="hint">Tip: You can also right-click a page → Tabulazer: Toggle / Pick table.</div>
     </section>
@@ -64,6 +69,60 @@
           <input id="paging" type="checkbox" />
           <span>Enable paging</span>
         </label>
+        <select id="pageSize" class="select" title="Rows per page">
+          <option value="25">25</option>
+          <option value="50">50</option>
+          <option value="100">100</option>
+          <option value="250">250</option>
+          <option value="500">500</option>
+        </select>
+      </div>
+
+      <div class="setting-row">
+        <label class="checkbox">
+          <input id="quickFilterEnabled" type="checkbox" />
+          <span>Enable quick filter</span>
+        </label>
+      </div>
+
+      <div class="setting-row">
+        <label class="checkbox">
+          <input id="columnChooser" type="checkbox" />
+          <span>Enable column chooser</span>
+        </label>
+      </div>
+
+      <div class="setting-row">
+        <label class="checkbox">
+          <input id="rememberLayout" type="checkbox" />
+          <span>Remember layout for this page</span>
+        </label>
+      </div>
+
+      <div class="setting-row">
+        <label class="checkbox">
+          <input id="compactMode" type="checkbox" />
+          <span>Enable compact mode</span>
+        </label>
+      </div>
+
+      <div class="setting-row">
+        <label class="checkbox">
+          <input id="zebraRows" type="checkbox" />
+          <span>Enable zebra rows</span>
+        </label>
+      </div>
+
+      <div class="setting-row">
+        <label class="checkbox">
+          <span>Font size</span>
+        </label>
+        <input id="fontSize" class="range" type="range" min="75" max="150" step="5" />
+      </div>
+
+      <div class="shortcuts">
+        <div class="section-title">Shortcuts</div>
+        <div class="hint">ESC — cancel picker</div>
       </div>
     </section>
   </main>

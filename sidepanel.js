@@ -39,6 +39,8 @@ async function updateTabMeta() {
   }
 }
 
+let currentOptions = null;
+
 async function restoreOptions() {
   return new Promise(function (resolve) {
     chrome.storage.sync.get(
@@ -47,12 +49,35 @@ async function restoreOptions() {
         sorting: true,
         filters: true,
         paging: true,
+        pageSize: 100,
+        quickFilter: false,
+        columnChooser: false,
+        rememberLayout: false,
+        compactMode: false,
+        zebraRows: false,
+        fontSize: 100,
       },
       function (items) {
         $("forceWidth").checked = !!items.forceWidth;
         $("sorting").checked = !!items.sorting;
         $("filters").checked = !!items.filters;
         $("paging").checked = !!items.paging;
+
+        $("pageSize").value = String(items.pageSize || 100);
+        $("pageSize").disabled = !$("paging").checked;
+
+        $("quickFilterEnabled").checked = !!items.quickFilter;
+        $("columnChooser").checked = !!items.columnChooser;
+        $("rememberLayout").checked = !!items.rememberLayout;
+        $("compactMode").checked = !!items.compactMode;
+        $("zebraRows").checked = !!items.zebraRows;
+        $("fontSize").value = String(items.fontSize || 100);
+
+        // Toggle quick filter UI
+        var qWrap = document.getElementById("quick-filter-wrap");
+        if (qWrap) qWrap.style.display = items.quickFilter ? "block" : "none";
+
+        currentOptions = items;
         resolve(items);
       }
     );
@@ -65,6 +90,13 @@ async function saveOptions() {
     sorting: $("sorting").checked,
     filters: $("filters").checked,
     paging: $("paging").checked,
+    pageSize: Number($("pageSize").value || 100),
+    quickFilter: $("quickFilterEnabled").checked,
+    columnChooser: $("columnChooser").checked,
+    rememberLayout: $("rememberLayout").checked,
+    compactMode: $("compactMode").checked,
+    zebraRows: $("zebraRows").checked,
+    fontSize: Number($("fontSize").value || 100),
   };
   return new Promise(function (resolve) {
     chrome.storage.sync.set(items, function () {
@@ -114,6 +146,25 @@ function renderTables(tables) {
       btnSelect.disabled = false;
     });
 
+    var btnCols = null;
+    if (state && currentOptions && currentOptions.columnChooser) {
+      btnCols = document.createElement("button");
+      btnCols.className = "btn btn-ghost btn-mini";
+      btnCols.type = "button";
+      btnCols.textContent = "Columns";
+      btnCols.addEventListener("click", async function () {
+        btnCols.disabled = true;
+        setStatus("Columns...");
+        var resp = await sendMessage({ type: "openColumnChooser", tableId: t.id });
+        if (resp && resp.ok === false && resp.error) {
+          setStatus(resp.error);
+        } else {
+          setStatus("");
+        }
+        btnCols.disabled = false;
+      });
+    }
+
     var sw = document.createElement("label");
     sw.className = "switch";
 
@@ -145,6 +196,7 @@ function renderTables(tables) {
 
     row.appendChild(label);
     row.appendChild(btnSelect);
+    if (btnCols) row.appendChild(btnCols);
     row.appendChild(sw);
     list.appendChild(row);
   });
@@ -205,10 +257,46 @@ async function wireEvents() {
   });
 
   // Settings: save on change
-  ["forceWidth", "sorting", "filters", "paging"].forEach(function (id) {
-    $(id).addEventListener("change", function () {
-      saveOptions();
+  [
+    "forceWidth",
+    "sorting",
+    "filters",
+    "paging",
+    "pageSize",
+    "quickFilterEnabled",
+    "columnChooser",
+    "rememberLayout",
+    "compactMode",
+    "zebraRows",
+    "fontSize",
+  ].forEach(function (id) {
+    $(id).addEventListener("change", async function () {
+      if (id === "paging") {
+        $("pageSize").disabled = !$("paging").checked;
+      }
+
+      // Toggle quick filter UI
+      if (id === "quickFilterEnabled") {
+        var qWrap = document.getElementById("quick-filter-wrap");
+        if (qWrap) qWrap.style.display = $("quickFilterEnabled").checked ? "block" : "none";
+
+        // Clear filter when disabled
+        if (!$("quickFilterEnabled").checked) {
+          try { $("quickFilter").value = ""; } catch (e) {}
+          await sendMessage({ type: "setQuickFilter", query: "" });
+        }
+      }
+
+      await saveOptions();
+      // Apply visual prefs & quick filter to active tables.
+      await sendMessage({ type: "applySettings" });
     });
+  });
+
+  // Quick filter input
+  $("quickFilter").addEventListener("input", async function () {
+    if (!$("quickFilterEnabled").checked) return;
+    await sendMessage({ type: "setQuickFilter", query: $("quickFilter").value || "" });
   });
 
   // Auto-refresh when tab changes

@@ -8,13 +8,19 @@ const tabulazer = {
   copyRootMenuId: "tabulazer-copy-root",
   downloadRootMenuId: "tabulazer-download-root",
 
-  copyCsvMenuId: "tabulazer-copy-csv",
-  copyXlsxMenuId: "tabulazer-copy-xlsx",
-  copyXmlMenuId: "tabulazer-copy-xml",
+  copyCsvCurrentMenuId: "tabulazer-copy-csv-current",
+  copyXlsxCurrentMenuId: "tabulazer-copy-xlsx-current",
+  copyXmlCurrentMenuId: "tabulazer-copy-xml-current",
+  copyCsvAllMenuId: "tabulazer-copy-csv-all",
+  copyXlsxAllMenuId: "tabulazer-copy-xlsx-all",
+  copyXmlAllMenuId: "tabulazer-copy-xml-all",
 
-  downloadCsvMenuId: "tabulazer-download-csv",
-  downloadXlsxMenuId: "tabulazer-download-xlsx",
-  downloadXmlMenuId: "tabulazer-download-xml",
+  downloadCsvCurrentMenuId: "tabulazer-download-csv-current",
+  downloadXlsxCurrentMenuId: "tabulazer-download-xlsx-current",
+  downloadXmlCurrentMenuId: "tabulazer-download-xml-current",
+  downloadCsvAllMenuId: "tabulazer-download-csv-all",
+  downloadXlsxAllMenuId: "tabulazer-download-xlsx-all",
+  downloadXmlAllMenuId: "tabulazer-download-xml-all",
 };
 
 function callToggle(tab, tableId) {
@@ -162,9 +168,12 @@ chrome.runtime.onInstalled.addListener(() => {
 
         // Copy submenu
         [
-          { id: tabulazer.copyCsvMenuId, title: "CSV" },
-          { id: tabulazer.copyXlsxMenuId, title: "XLSX" },
-          { id: tabulazer.copyXmlMenuId, title: "XML" },
+          { id: tabulazer.copyCsvCurrentMenuId, title: "CSV (current view)" },
+          { id: tabulazer.copyXlsxCurrentMenuId, title: "XLSX (current view)" },
+          { id: tabulazer.copyXmlCurrentMenuId, title: "XML (current view)" },
+          { id: tabulazer.copyCsvAllMenuId, title: "CSV (all rows)" },
+          { id: tabulazer.copyXlsxAllMenuId, title: "XLSX (all rows)" },
+          { id: tabulazer.copyXmlAllMenuId, title: "XML (all rows)" },
         ].forEach((item) => {
           chrome.contextMenus.create(
             {
@@ -185,9 +194,12 @@ chrome.runtime.onInstalled.addListener(() => {
 
         // Download submenu
         [
-          { id: tabulazer.downloadCsvMenuId, title: "CSV" },
-          { id: tabulazer.downloadXlsxMenuId, title: "XLSX" },
-          { id: tabulazer.downloadXmlMenuId, title: "XML" },
+          { id: tabulazer.downloadCsvCurrentMenuId, title: "CSV (current view)" },
+          { id: tabulazer.downloadXlsxCurrentMenuId, title: "XLSX (current view)" },
+          { id: tabulazer.downloadXmlCurrentMenuId, title: "XML (current view)" },
+          { id: tabulazer.downloadCsvAllMenuId, title: "CSV (all rows)" },
+          { id: tabulazer.downloadXlsxAllMenuId, title: "XLSX (all rows)" },
+          { id: tabulazer.downloadXmlAllMenuId, title: "XML (all rows)" },
         ].forEach((item) => {
           chrome.contextMenus.create(
             {
@@ -255,9 +267,10 @@ async function ensureSheetJs(tab) {
   }
 }
 
-async function exportFromPage(tab, tableId, format, mode) {
+async function exportFromPage(tab, tableId, format, mode, scope) {
   // format: csv|xml|xlsx
   // mode: copy|download
+  // scope: current|all
   await injectScripts(tab);
 
   if (format === "xlsx") {
@@ -266,8 +279,8 @@ async function exportFromPage(tab, tableId, format, mode) {
 
   await chrome.scripting.executeScript({
     target: { tabId: tab.id },
-    args: [tableId, format, mode],
-    func: async (tableIdArg, formatArg, modeArg) => {
+    args: [tableId, format, mode, scope],
+    func: async (tableIdArg, formatArg, modeArg, scopeArg) => {
       function escapeCsv(v) {
         const s = (v == null) ? "" : String(v);
         if (/[\n\r,\"]/g.test(s)) {
@@ -301,6 +314,41 @@ async function exportFromPage(tab, tableId, format, mode) {
       function extractGrid(tableEl) {
         const rows = Array.from(tableEl.querySelectorAll("tr"));
         return rows.map((tr) => Array.from(tr.querySelectorAll("th,td")).map((c) => (c.innerText || c.textContent || "").trim()));
+      }
+
+      function gridFromTabulator(instance, scope) {
+        try {
+          const cols = (typeof instance.getColumns === "function") ? instance.getColumns() : [];
+          const headers = cols
+            .map((c) => (c.getDefinition ? c.getDefinition() : null))
+            .map((d) => (d && (d.title || d.field)) ? (d.title || d.field) : "")
+            .filter((x) => x !== "");
+
+          const fields = cols
+            .map((c) => (c.getField ? c.getField() : null))
+            .filter((x) => !!x);
+
+          const data = (scope === "current" && typeof instance.getData === "function")
+            ? instance.getData("active")
+            : (typeof instance.getData === "function" ? instance.getData() : []);
+
+          const grid = [headers.length ? headers : fields];
+          (data || []).forEach((row) => {
+            const out = [];
+            fields.forEach((f) => {
+              const v = (row && row[f] != null) ? row[f] : "";
+              // Strip HTML for export
+              const tmp = document.createElement("div");
+              tmp.innerHTML = String(v);
+              out.push((tmp.innerText || tmp.textContent || "").trim());
+            });
+            grid.push(out);
+          });
+
+          return grid;
+        } catch (e) {
+          return null;
+        }
       }
 
       function toXml(grid) {
@@ -345,32 +393,41 @@ async function exportFromPage(tab, tableId, format, mode) {
         await navigator.clipboard.write([item]);
       }
 
+      const inst = (typeof window.tabulazerGetInstanceById === "function") ? window.tabulazerGetInstanceById(tableIdArg) : null;
+      const isActive = !!inst;
+
       const tableEl = tableElFromId(tableIdArg);
-      if (!tableEl) {
+      if (!tableEl && !isActive) {
         alert("Tabulazer: No table selected");
         return;
       }
 
       const ts = new Date().toISOString().replace(/[:.]/g, "-");
+      const scopeLabel = (scopeArg === "current") ? "current" : "all";
+
+      // Prefer Tabulator data when active so we can respect current view (filters/sort).
+      const grid = (isActive ? gridFromTabulator(inst, scopeArg) : null) || (tableEl ? extractGrid(tableEl) : null);
+      if (!grid) {
+        alert("Tabulazer: unable to export table");
+        return;
+      }
 
       if (formatArg === "csv") {
-        const grid = extractGrid(tableEl);
         const csv = grid.map((row) => row.map(escapeCsv).join(",")).join("\n") + "\n";
         if (modeArg === "copy") {
           await navigator.clipboard.writeText(csv);
         } else {
-          downloadBlob(new Blob([csv], { type: "text/csv;charset=utf-8" }), `tabulazer-${ts}.csv`);
+          downloadBlob(new Blob([csv], { type: "text/csv;charset=utf-8" }), `tabulazer-${ts}-${scopeLabel}.csv`);
         }
         return;
       }
 
       if (formatArg === "xml") {
-        const grid = extractGrid(tableEl);
         const xml = toXml(grid);
         if (modeArg === "copy") {
           await navigator.clipboard.writeText(xml);
         } else {
-          downloadBlob(new Blob([xml], { type: "application/xml;charset=utf-8" }), `tabulazer-${ts}.xml`);
+          downloadBlob(new Blob([xml], { type: "application/xml;charset=utf-8" }), `tabulazer-${ts}-${scopeLabel}.xml`);
         }
         return;
       }
@@ -382,7 +439,10 @@ async function exportFromPage(tab, tableId, format, mode) {
           return;
         }
 
-        const wb = XLSX.utils.table_to_book(tableEl, { sheet: "Table" });
+        const ws = XLSX.utils.aoa_to_sheet(grid);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Table");
+
         const arr = XLSX.write(wb, { bookType: "xlsx", type: "array" });
         const blob = new Blob([arr], {
           type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -392,12 +452,10 @@ async function exportFromPage(tab, tableId, format, mode) {
           try {
             await copyBlob(blob, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
           } catch (e) {
-            // Clipboard for binary types is still flaky in some Chromium builds.
-            // Fall back to download.
-            downloadBlob(blob, `tabulazer-${ts}.xlsx`);
+            downloadBlob(blob, `tabulazer-${ts}-${scopeLabel}.xlsx`);
           }
         } else {
-          downloadBlob(blob, `tabulazer-${ts}.xlsx`);
+          downloadBlob(blob, `tabulazer-${ts}-${scopeLabel}.xlsx`);
         }
         return;
       }
@@ -431,12 +489,19 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   }
 
   const copyMap = {
-    [tabulazer.copyCsvMenuId]: { format: "csv", mode: "copy" },
-    [tabulazer.copyXlsxMenuId]: { format: "xlsx", mode: "copy" },
-    [tabulazer.copyXmlMenuId]: { format: "xml", mode: "copy" },
-    [tabulazer.downloadCsvMenuId]: { format: "csv", mode: "download" },
-    [tabulazer.downloadXlsxMenuId]: { format: "xlsx", mode: "download" },
-    [tabulazer.downloadXmlMenuId]: { format: "xml", mode: "download" },
+    [tabulazer.copyCsvCurrentMenuId]: { format: "csv", mode: "copy", scope: "current" },
+    [tabulazer.copyXlsxCurrentMenuId]: { format: "xlsx", mode: "copy", scope: "current" },
+    [tabulazer.copyXmlCurrentMenuId]: { format: "xml", mode: "copy", scope: "current" },
+    [tabulazer.copyCsvAllMenuId]: { format: "csv", mode: "copy", scope: "all" },
+    [tabulazer.copyXlsxAllMenuId]: { format: "xlsx", mode: "copy", scope: "all" },
+    [tabulazer.copyXmlAllMenuId]: { format: "xml", mode: "copy", scope: "all" },
+
+    [tabulazer.downloadCsvCurrentMenuId]: { format: "csv", mode: "download", scope: "current" },
+    [tabulazer.downloadXlsxCurrentMenuId]: { format: "xlsx", mode: "download", scope: "current" },
+    [tabulazer.downloadXmlCurrentMenuId]: { format: "xml", mode: "download", scope: "current" },
+    [tabulazer.downloadCsvAllMenuId]: { format: "csv", mode: "download", scope: "all" },
+    [tabulazer.downloadXlsxAllMenuId]: { format: "xlsx", mode: "download", scope: "all" },
+    [tabulazer.downloadXmlAllMenuId]: { format: "xml", mode: "download", scope: "all" },
   };
 
   const action = copyMap[info.menuItemId];
@@ -448,7 +513,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     return;
   }
 
-  await exportFromPage(tab, tableId, action.format, action.mode);
+  await exportFromPage(tab, tableId, action.format, action.mode, action.scope);
 });
 
 function getActiveTab(callback) {
@@ -603,6 +668,140 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
         sendResponse({ ok: true, count: active.length });
       });
+    });
+    return true;
+  }
+
+  if (kind === "setQuickFilter") {
+    const query = request && request.query ? String(request.query) : "";
+    getActiveTab(async (tab) => {
+      if (!tab || !tab.id) {
+        sendResponse({ ok: false, error: "No active tab" });
+        return;
+      }
+      await injectScripts(tab);
+      chrome.scripting.executeScript({
+        target: { tabId: tab.id },
+        args: [query],
+        func: (q) => {
+          try {
+            if (typeof window.tabulazerSetQuickFilter === "function") {
+              window.tabulazerSetQuickFilter(q);
+            }
+          } catch (e) {}
+        },
+      });
+      sendResponse({ ok: true });
+    });
+    return true;
+  }
+
+  if (kind === "openColumnChooser") {
+    const tableId = request && request.tableId;
+    getActiveTab(async (tab) => {
+      if (!tab || !tab.id) {
+        sendResponse({ ok: false, error: "No active tab" });
+        return;
+      }
+      await injectScripts(tab);
+      chrome.scripting.executeScript({
+        target: { tabId: tab.id },
+        args: [tableId],
+        func: (id) => {
+          try {
+            const inst = (typeof window.tabulazerGetInstanceById === "function") ? window.tabulazerGetInstanceById(id) : null;
+            if (!inst || typeof inst.getColumns !== "function") {
+              alert("Tabulazer: Column chooser is available only for active tables.");
+              return;
+            }
+
+            const existing = document.getElementById("tabulazer-columns-overlay");
+            if (existing) existing.remove();
+
+            const overlay = document.createElement("div");
+            overlay.id = "tabulazer-columns-overlay";
+            overlay.style.cssText = "position:fixed;z-index:2147483647;inset:0;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;";
+
+            const card = document.createElement("div");
+            card.style.cssText = "width:min(420px,92vw);max-height:80vh;overflow:auto;background:#fff;color:#111;border-radius:12px;padding:12px;box-shadow:0 10px 30px rgba(0,0,0,.35);font:13px/1.3 system-ui, -apple-system, Segoe UI, Roboto, Arial;";
+
+            const title = document.createElement("div");
+            title.textContent = "Columns";
+            title.style.cssText = "font-weight:800;margin-bottom:8px;";
+
+            const btnRow = document.createElement("div");
+            btnRow.style.cssText = "display:flex;gap:8px;justify-content:flex-end;margin-bottom:8px;";
+
+            const closeBtn = document.createElement("button");
+            closeBtn.textContent = "Close";
+            closeBtn.style.cssText = "padding:6px 10px;border-radius:10px;border:1px solid #cbd5e1;background:#fff;cursor:pointer;font-weight:700;";
+            closeBtn.onclick = () => overlay.remove();
+
+            btnRow.appendChild(closeBtn);
+
+            const list = document.createElement("div");
+            list.style.cssText = "display:flex;flex-direction:column;gap:6px;";
+
+            const cols = inst.getColumns();
+            cols.forEach((c) => {
+              try {
+                const def = c.getDefinition ? c.getDefinition() : null;
+                const name = (def && (def.title || def.field)) ? (def.title || def.field) : "(column)";
+                const row = document.createElement("label");
+                row.style.cssText = "display:flex;align-items:center;gap:10px;padding:6px 8px;border:1px solid #e2e8f0;border-radius:10px;";
+                const cb = document.createElement("input");
+                cb.type = "checkbox";
+                cb.checked = c.isVisible ? c.isVisible() : true;
+                cb.onchange = () => {
+                  if (cb.checked) { if (c.show) c.show(); } else { if (c.hide) c.hide(); }
+                };
+                const span = document.createElement("span");
+                span.textContent = name;
+                row.appendChild(cb);
+                row.appendChild(span);
+                list.appendChild(row);
+              } catch (e) {}
+            });
+
+            card.appendChild(title);
+            card.appendChild(btnRow);
+            card.appendChild(list);
+            overlay.appendChild(card);
+
+            overlay.addEventListener("click", (ev) => {
+              if (ev.target === overlay) overlay.remove();
+            });
+
+            document.documentElement.appendChild(overlay);
+          } catch (e) {
+            alert("Tabulazer: unable to open column chooser");
+          }
+        },
+      });
+      sendResponse({ ok: true });
+    });
+    return true;
+  }
+
+  if (kind === "applySettings") {
+    // Re-apply visual preferences to any active hosts.
+    getActiveTab(async (tab) => {
+      if (!tab || !tab.id) {
+        sendResponse({ ok: false, error: "No active tab" });
+        return;
+      }
+      await injectScripts(tab);
+      chrome.scripting.executeScript({
+        target: { tabId: tab.id },
+        func: () => {
+          try {
+            if (typeof window.tabulazerApplyVisualPrefs === "function") {
+              window.tabulazerApplyVisualPrefs();
+            }
+          } catch (e) {}
+        },
+      });
+      sendResponse({ ok: true });
     });
     return true;
   }

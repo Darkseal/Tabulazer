@@ -63,6 +63,39 @@ body {
   background: rgba(148, 163, 184, 0.2);
 }
 
+.input {
+  width: 100%;
+  padding: 9px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: rgba(255, 255, 255, 0.6);
+  font-size: 13px;
+}
+
+.select {
+  padding: 7px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: rgba(255, 255, 255, 0.6);
+  font-size: 13px;
+}
+
+.select:disabled {
+  opacity: 0.6;
+}
+
+.range {
+  width: 120px;
+}
+
+.quick-filter {
+  margin: 6px 0 10px;
+}
+
+.shortcuts {
+  margin-top: 10px;
+}
+
 .btn:disabled {
   opacity: 0.55;
   cursor: not-allowed;
