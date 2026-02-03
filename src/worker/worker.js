@@ -129,27 +129,34 @@ chrome.runtime.onInstalled.addListener(() => {
   );
 });
 
-chrome.action.onClicked.addListener(async (tab) => {
+async function openSidePanelForTab(tabId) {
   try {
-    if (tab && tab.id && chrome.sidePanel && chrome.sidePanel.open) {
-      await chrome.sidePanel.open({ tabId: tab.id });
+    if (tabId && chrome.sidePanel && chrome.sidePanel.open) {
+      await chrome.sidePanel.open({ tabId });
     }
   } catch (e) {
     // ignore
   }
+}
+
+chrome.action.onClicked.addListener(async (tab) => {
+  if (!tab || !tab.id) return;
+  await openSidePanelForTab(tab.id);
 });
 
 chrome.contextMenus.onClicked.addListener((info, tab) => {
   if (!tab || !tab.id) return;
 
   if (info.menuItemId === tabulazer.pickMenuItemId) {
-    // Start overlay picker
+    // Start overlay picker and open the side panel for quick access to controls.
+    openSidePanelForTab(tab.id);
     chrome.tabs.sendMessage(tab.id, { type: "startPicker" }, () => {});
     return;
   }
 
   if (info.menuItemId !== tabulazer.menuItemId) return;
 
+  openSidePanelForTab(tab.id);
   chrome.tabs.sendMessage(tab.id, { type: "getLastTableTarget" }, (resp) => {
     const tableId = resp && resp.value ? resp.value.tableId : null;
     // tableId may be null (e.g., right-click outside a table). In that case, we still
