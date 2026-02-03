@@ -5,6 +5,7 @@
 
 var tabulazer = {
   lastTableId: null,
+  lastRightClickInTable: false,
   isInjected: false,
   injectedVersion: null,
 };
@@ -27,6 +28,7 @@ document.addEventListener(
       var target = event.target;
       if (!target || !target.closest) {
         tabulazer.lastTableId = null;
+        tabulazer.lastRightClickInTable = false;
         return;
       }
 
@@ -35,12 +37,14 @@ document.addEventListener(
       var host = target.closest("[data-tabulazer-host-id]");
       if (host) {
         tabulazer.lastTableId = host.getAttribute("data-tabulazer-host-id") || null;
+        tabulazer.lastRightClickInTable = true;
         return;
       }
 
       // Otherwise resolve the nearest real table.
       var table = target.closest("table");
       tabulazer.lastTableId = ensureTableId(table);
+      tabulazer.lastRightClickInTable = !!table;
     } catch (e) {
       tabulazer.lastTableId = null;
     }
@@ -242,6 +246,9 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   switch (kind) {
     case "getLastTableTarget":
       sendResponse({ value: { tableId: tabulazer.lastTableId } });
+      break;
+    case "getContextInfo":
+      sendResponse({ inTable: !!tabulazer.lastRightClickInTable, tableId: tabulazer.lastTableId || null });
       break;
     case "setLastTableTarget":
       tabulazer.lastTableId = (request && request.tableId) ? request.tableId : tabulazer.lastTableId;

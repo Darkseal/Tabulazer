@@ -116,6 +116,27 @@ function injectScripts(tab) {
   });
 }
 
+// Dynamically enable/disable context menu items based on where the user right-clicked.
+// - If right-click is inside a table (or active Tabulazer host): enable Toggle Table, disable Pick Table
+// - Otherwise: enable Pick Table, disable Toggle Table
+try {
+  chrome.contextMenus.onShown.addListener((info, tab) => {
+    const tabId = tab && tab.id;
+    if (!tabId) return;
+
+    chrome.tabs.sendMessage(tabId, { type: "getContextInfo" }, (resp) => {
+      const err = chrome.runtime.lastError;
+      const inTable = (!err && resp) ? !!resp.inTable : false;
+
+      chrome.contextMenus.update(tabulazer.toggleMenuId, { enabled: inTable }, () => {});
+      chrome.contextMenus.update(tabulazer.pickMenuId, { enabled: !inTable }, () => {});
+
+      // Update the already-open menu.
+      try { chrome.contextMenus.refresh(); } catch (e) {}
+    });
+  });
+} catch (e) {}
+
 // Important: create context menus in onInstalled (recommended & most reliable in MV3)
 chrome.runtime.onInstalled.addListener(() => {
   // Prefer opening the side panel when the user clicks the action button.
