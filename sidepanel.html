@@ -21,13 +21,23 @@
     <section class="actions">
       <button id="btn-pick" class="btn btn-primary" type="button">Pick table</button>
       <button id="btn-toggle-last" class="btn btn-secondary" type="button">Toggle last</button>
-      <button id="btn-activate-all" class="btn btn-secondary" type="button">Activate all</button>
+      <button id="btn-activate-all" class="btn btn-success" type="button">Activate all</button>
       <button id="btn-deactivate-all" class="btn btn-danger" type="button">Deactivate all</button>
     </section>
 
     <section class="status">
       <div id="status-msg" class="status-msg"></div>
     </section>
+
+    <section class="tables">
+      <div class="section-title">Tables</div>
+      <div id="tables-list" class="tables-list"></div>
+      <div class="hint">Tip: You can also right-click a page → Tabulazer: Toggle / Pick table.</div>
+    </section>
+
+    <footer class="footer">
+      <div class="hint">Pick table shows an overlay: click a table to activate/deactivate; press ESC to cancel.</div>
+    </footer>
 
     <section class="settings">
       <div class="section-title">Settings</div>
@@ -56,17 +66,6 @@
         </label>
       </div>
     </section>
-
-    <section class="tables">
-      <div class="section-title">Tables</div>
-      <div id="tables-list" class="tables-list"></div>
-      <div class="hint">Tip: You can also right-click a page → Tabulazer: Toggle / Pick table.</div>
-    </section>
-
-    <footer class="footer">
-      <div class="hint">Pick table shows an overlay: click a table to activate/deactivate; press ESC to cancel.</div>
-      <div class="hint">Use CTRL+C to copy/paste the table into CSV/Excel/GSheets.</div>
-    </footer>
   </main>
 
   <script src="sidepanel.js"></script>
