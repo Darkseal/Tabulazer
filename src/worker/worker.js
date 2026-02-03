@@ -121,15 +121,21 @@ function injectScripts(tab) {
 // - Otherwise: enable Pick Table, disable Toggle Table
 try {
   chrome.contextMenus.onShown.addListener((info, tab) => {
-    const tabId = tab && tab.id;
+    const tabId = (tab && tab.id) || (info && info.tabId);
     if (!tabId) return;
 
     chrome.tabs.sendMessage(tabId, { type: "getContextInfo" }, (resp) => {
       const err = chrome.runtime.lastError;
       const inTable = (!err && resp) ? !!resp.inTable : false;
 
-      chrome.contextMenus.update(tabulazer.toggleMenuId, { enabled: inTable }, () => {});
-      chrome.contextMenus.update(tabulazer.pickMenuId, { enabled: !inTable }, () => {});
+      chrome.contextMenus.update(tabulazer.toggleMenuId, { enabled: inTable }, () => {
+        const e = chrome.runtime.lastError;
+        if (e) console.warn("Tabulazer: contextMenus.update(toggle)", e.message);
+      });
+      chrome.contextMenus.update(tabulazer.pickMenuId, { enabled: !inTable }, () => {
+        const e = chrome.runtime.lastError;
+        if (e) console.warn("Tabulazer: contextMenus.update(pick)", e.message);
+      });
 
       // Update the already-open menu.
       try { chrome.contextMenus.refresh(); } catch (e) {}
