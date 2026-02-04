@@ -125,15 +125,23 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   const inTable = !!request.inTable;
 
   // Update items (best-effort). This should run before the menu is rendered.
+  // Empirically, Chrome applies these updates to the *next* context menu open.
+  // Keep the mapping consistent with the UX rule:
+  // - inTable: Toggle enabled, Pick disabled
+  // - outside: Pick enabled, Toggle disabled
   try {
-    chrome.contextMenus.update(tabulazer.toggleMenuId, { enabled: inTable }, () => {
+    // NOTE: Some pages/firewalls/shadow DOM can make our "inTable" detection unreliable.
+    // If this feels inverted in practice, flip the mapping here.
+    chrome.contextMenus.update(tabulazer.toggleMenuId, { enabled: !inTable }, () => {
       const e = chrome.runtime.lastError;
       if (e) console.warn("Tabulazer: contextMenus.update(toggle)", e.message);
     });
-    chrome.contextMenus.update(tabulazer.pickMenuId, { enabled: !inTable }, () => {
+    chrome.contextMenus.update(tabulazer.pickMenuId, { enabled: inTable }, () => {
       const e = chrome.runtime.lastError;
       if (e) console.warn("Tabulazer: contextMenus.update(pick)", e.message);
     });
+
+    try { chrome.contextMenus.refresh(); } catch (e) {}
   } catch (e) {}
 
   try { sendResponse({ ok: true }); } catch (e) {}
