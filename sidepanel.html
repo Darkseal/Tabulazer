@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tabulazer</title>
+  <link rel="stylesheet" href="sidepanel.css" />
+</head>
+<body>
+  <main class="panel">
+    <header class="header">
+      <div>
+        <div class="title">Tabulazer</div>
+        <div id="tab-meta" class="subtitle">—</div>
+      </div>
+      <div class="header-actions">
+        <button id="btn-refresh" class="btn btn-ghost" type="button">Refresh</button>
+      </div>
+    </header>
+
+    <section class="actions">
+      <button id="btn-pick" class="btn btn-primary" type="button">Pick table</button>
+      <button id="btn-toggle-last" class="btn btn-secondary" type="button">Toggle last</button>
+      <button id="btn-activate-all" class="btn btn-success" type="button">Activate all</button>
+      <button id="btn-deactivate-all" class="btn btn-danger" type="button">Deactivate all</button>
+    </section>
+
+    <section class="status">
+      <div id="status-msg" class="status-msg"></div>
+    </section>
+
+    <section class="tables">
+      <div class="section-title">Tables</div>
+
+      <div id="quick-filter-wrap" class="quick-filter" style="display:none;">
+        <input id="quickFilter" class="input" type="search" placeholder="Quick filter..." />
+      </div>
+
+      <div id="tables-list" class="tables-list"></div>
+      <div class="hint">Tip: You can also right-click a page → Tabulazer: Toggle / Pick table.</div>
+    </section>
+
+
+    <section class="remember">
+      <div class="setting-row remember-row">
+        <div class="remember-label">
+          <div class="remember-title">Remember layout for this page</div>
+          <div class="remember-sub">Keeps filters/sorting/columns for this URL</div>
+        </div>
+        <label class="switch">
+          <input id="rememberLayout" type="checkbox" />
+          <span class="slider"></span>
+        </label>
+      </div>
+    </section>
+
+    <section class="settings">
+      <div class="section-title">Settings</div>
+      <div class="setting-row">
+        <label class="checkbox">
+          <input id="forceWidth" type="checkbox" />
+          <span>Force table width to 100%</span>
+        </label>
+      </div>
+      <div class="setting-row">
+        <label class="checkbox">
+          <input id="sorting" type="checkbox" />
+          <span>Enable sorting</span>
+        </label>
+      </div>
+      <div class="setting-row">
+        <label class="checkbox">
+          <input id="filters" type="checkbox" />
+          <span>Enable column filters</span>
+        </label>
+      </div>
+      <div class="setting-row paging-row">
+        <label class="checkbox">
+          <input id="paging" type="checkbox" />
+          <span>Enable paging</span>
+          <select id="pageSize" class="select" title="Rows per page">
+            <option value="10">10</option>
+            <option value="25">25</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+            <option value="250">250</option>
+            <option value="500">500</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="setting-row">
+        <label class="checkbox">
+          <input id="quickFilterEnabled" type="checkbox" />
+          <span>Enable quick filter</span>
+        </label>
+      </div>
+
+      <div class="setting-row">
+        <label class="checkbox">
+          <input id="columnChooser" type="checkbox" />
+          <span>Enable column chooser</span>
+        </label>
+      </div>
+
+
+      <div class="setting-row">
+        <label class="checkbox">
+          <input id="compactMode" type="checkbox" />
+          <span>Enable compact mode</span>
+        </label>
+      </div>
+
+      <div class="setting-row">
+        <label class="checkbox">
+          <input id="zebraRows" type="checkbox" />
+          <span>Enable zebra rows</span>
+        </label>
+      </div>
+
+      <div class="setting-row">
+        <label class="checkbox">
+          <span>Font size</span>
+        </label>
+        <div class="font-size-control">
+          <span id="fontSizeLabel">100%</span>
+          <input id="fontSize" class="range" type="range" min="75" max="150" step="5" value="100" />
+        </div>
+      </div>
+
+    </section>
+
+    <section class="shortcuts">
+      <div class="section-title">Shortcuts</div>
+      <div class="hint">ESC — cancel picker</div>
+    </section>
+  </main>
+
+  <script src="sidepanel.js"></script>
+</body>
+</html>
