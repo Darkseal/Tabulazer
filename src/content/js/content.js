@@ -29,24 +29,32 @@ document.addEventListener(
       if (!target || !target.closest) {
         tabulazer.lastTableId = null;
         tabulazer.lastRightClickInTable = false;
-        return;
+      } else {
+        // If the table has been replaced by Tabulazer, right-clicks happen inside the Tabulator UI.
+        // In that case, resolve the tableId from the host container.
+        var host = target.closest("[data-tabulazer-host-id]");
+        if (host) {
+          tabulazer.lastTableId = host.getAttribute("data-tabulazer-host-id") || null;
+          tabulazer.lastRightClickInTable = true;
+        } else {
+          // Otherwise resolve the nearest real table.
+          var table = target.closest("table");
+          tabulazer.lastTableId = ensureTableId(table);
+          tabulazer.lastRightClickInTable = !!table;
+        }
       }
 
-      // If the table has been replaced by Tabulazer, right-clicks happen inside the Tabulator UI.
-      // In that case, resolve the tableId from the host container.
-      var host = target.closest("[data-tabulazer-host-id]");
-      if (host) {
-        tabulazer.lastTableId = host.getAttribute("data-tabulazer-host-id") || null;
-        tabulazer.lastRightClickInTable = true;
-        return;
-      }
-
-      // Otherwise resolve the nearest real table.
-      var table = target.closest("table");
-      tabulazer.lastTableId = ensureTableId(table);
-      tabulazer.lastRightClickInTable = !!table;
+      // Send context to service worker so it can update enabled/disabled menu items
+      // before the menu is rendered.
+      try {
+        chrome.runtime.sendMessage({
+          type: "contextMenuContext",
+          inTable: !!tabulazer.lastRightClickInTable,
+        });
+      } catch (e) {}
     } catch (e) {
       tabulazer.lastTableId = null;
+      tabulazer.lastRightClickInTable = false;
     }
   },
   true

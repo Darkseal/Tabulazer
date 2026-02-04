@@ -116,51 +116,28 @@ function injectScripts(tab) {
   });
 }
 
-// Dynamically enable/disable context menu items based on where the user right-clicked.
-// - If right-click is inside a table (or active Tabulazer host): enable Toggle Table, disable Pick Table
-// - Otherwise: enable Pick Table, disable Toggle Table
-try {
-  chrome.contextMenus.onShown.addListener((info, tab) => {
-    const tabId = (tab && tab.id) || (info && info.tabId);
-    if (!tabId) return;
+// NOTE: Chrome's contextMenus API does NOT expose an "onShown" event (only onClicked).
+// To emulate dynamic enable/disable, the content script sends a message on every "contextmenu"
+// event *before* the menu is shown, and we update items immediately.
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (!request || request.type !== "contextMenuContext") return;
 
-    const frameId = (info && typeof info.frameId === "number") ? info.frameId : 0;
+  const inTable = !!request.inTable;
 
-    chrome.tabs.sendMessage(tabId, { type: "getContextInfo" }, { frameId }, (resp) => {
-      const err = chrome.runtime.lastError;
-      const inTable = (!err && resp) ? !!resp.inTable : false;
-
-      function applyUpdates() {
-        // DEBUG: also tweak titles so we can verify updates are applied visually.
-        const tTitle = inTable ? "Toggle Table" : "Toggle Table (disabled)";
-        const pTitle = inTable ? "Pick Table (disabled)" : "Pick Table";
-
-        chrome.contextMenus.update(tabulazer.toggleMenuId, { enabled: inTable, title: tTitle }, () => {
-          const e = chrome.runtime.lastError;
-          if (e) console.warn("Tabulazer: contextMenus.update(toggle)", e.message);
-        });
-        chrome.contextMenus.update(tabulazer.pickMenuId, { enabled: !inTable, title: pTitle }, () => {
-          const e = chrome.runtime.lastError;
-          if (e) console.warn("Tabulazer: contextMenus.update(pick)", e.message);
-        });
-
-        // Update the already-open menu.
-        try { chrome.contextMenus.refresh(); } catch (e) {}
-      }
-
-      // If items are missing (service worker restarted before menus were created), rebuild then retry.
-      chrome.contextMenus.update(tabulazer.rootMenuId, { title: "Tabulazer" }, () => {
-        const e = chrome.runtime.lastError;
-        if (e && /cannot find|not found/i.test(e.message || "")) {
-          rebuildContextMenus();
-          setTimeout(applyUpdates, 50);
-          return;
-        }
-        applyUpdates();
-      });
+  // Update items (best-effort). This should run before the menu is rendered.
+  try {
+    chrome.contextMenus.update(tabulazer.toggleMenuId, { enabled: inTable }, () => {
+      const e = chrome.runtime.lastError;
+      if (e) console.warn("Tabulazer: contextMenus.update(toggle)", e.message);
     });
-  });
-} catch (e) {}
+    chrome.contextMenus.update(tabulazer.pickMenuId, { enabled: !inTable }, () => {
+      const e = chrome.runtime.lastError;
+      if (e) console.warn("Tabulazer: contextMenus.update(pick)", e.message);
+    });
+  } catch (e) {}
+
+  try { sendResponse({ ok: true }); } catch (e) {}
+});
 
 function rebuildContextMenus() {
   // Rebuild context menus (avoids duplicates across reloads/updates).
