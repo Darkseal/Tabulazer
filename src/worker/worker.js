@@ -116,36 +116,8 @@ function injectScripts(tab) {
   });
 }
 
-// NOTE: Chrome's contextMenus API does NOT expose an "onShown" event (only onClicked).
-// To emulate dynamic enable/disable, the content script sends a message on every "contextmenu"
-// event *before* the menu is shown, and we update items immediately.
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (!request || request.type !== "contextMenuContext") return;
-
-  const inTable = !!request.inTable;
-
-  // Update items (best-effort). This should run before the menu is rendered.
-  // Empirically, Chrome applies these updates to the *next* context menu open.
-  // Keep the mapping consistent with the UX rule:
-  // - inTable: Toggle enabled, Pick disabled
-  // - outside: Pick enabled, Toggle disabled
-  try {
-    // NOTE: Some pages/firewalls/shadow DOM can make our "inTable" detection unreliable.
-    // If this feels inverted in practice, flip the mapping here.
-    chrome.contextMenus.update(tabulazer.toggleMenuId, { enabled: !inTable }, () => {
-      const e = chrome.runtime.lastError;
-      if (e) console.warn("Tabulazer: contextMenus.update(toggle)", e.message);
-    });
-    chrome.contextMenus.update(tabulazer.pickMenuId, { enabled: inTable }, () => {
-      const e = chrome.runtime.lastError;
-      if (e) console.warn("Tabulazer: contextMenus.update(pick)", e.message);
-    });
-
-    try { chrome.contextMenus.refresh(); } catch (e) {}
-  } catch (e) {}
-
-  try { sendResponse({ ok: true }); } catch (e) {}
-});
+// NOTE: There is no reliable "menu opened" hook in MV3 for dynamic enable/disable.
+// We keep both items enabled and handle the "Toggle outside table" case at click time.
 
 function rebuildContextMenus() {
   // Rebuild context menus (avoids duplicates across reloads/updates).
@@ -524,6 +496,26 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
 
   if (info.menuItemId === tabulazer.toggleMenuId) {
     openSidePanelForTab(tab.id);
+
+    const frameId = (info && typeof info.frameId === "number") ? info.frameId : 0;
+
+    // Determine if the last right-click was inside a table. If not, treat Toggle as Pick.
+    const inTable = await new Promise((resolve) => {
+      chrome.tabs.sendMessage(tab.id, { type: "isInTable" }, { frameId }, (resp) => {
+        const err = chrome.runtime.lastError;
+        if (err || !resp) return resolve(false);
+        resolve(!!resp.inTable);
+      });
+    });
+
+    if (!inTable) {
+      chrome.tabs.sendMessage(tab.id, { type: "startPicker" }, () => {
+        const err = chrome.runtime.lastError;
+        if (err) console.warn("Tabulazer: startPicker failed", err.message);
+      });
+      return;
+    }
+
     const tableId = await resolveTargetTableId(tab);
     renderTable(tab, tableId);
     return;

@@ -258,6 +258,10 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     case "getContextInfo":
       sendResponse({ inTable: !!tabulazer.lastRightClickInTable, tableId: tabulazer.lastTableId || null });
       break;
+    case "isInTable":
+      // Best-effort: content script can only infer the last right-click context.
+      sendResponse({ inTable: !!tabulazer.lastRightClickInTable, tableId: tabulazer.lastTableId || null });
+      break;
     case "setLastTableTarget":
       tabulazer.lastTableId = (request && request.tableId) ? request.tableId : tabulazer.lastTableId;
       sendResponse({ ok: true });
