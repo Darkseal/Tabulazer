@@ -1,0 +1,43 @@
+name: Build release zip
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build zip
+        run: |
+          set -euo pipefail
+          TAG="${GITHUB_REF_NAME}"
+          ZIP="Tabulazer-${TAG}.zip"
+
+          # Create a zip suitable for Chrome Web Store upload (manifest.json at archive root).
+          # Exclude git metadata, CI files, and dev-only folders.
+          zip -r "$ZIP" . \
+            -x ".git/*" \
+            -x ".github/*" \
+            -x "node_modules/*" \
+            -x "dist/*" \
+            -x "test-pages/*" \
+            -x "state/*" \
+            -x "**/.DS_Store" \
+            -x "**/Thumbs.db"
+
+          echo "ZIP_NAME=$ZIP" >> "$GITHUB_ENV"
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ env.ZIP_NAME }}
+          generate_release_notes: true
