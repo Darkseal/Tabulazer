@@ -32,8 +32,6 @@ The transformation is done using <a href="http://tabulator.info/" target="_blank
 ## External Packages
 Here's a list of all the open-source, third-party packages that have been used within the extension (all credit due to their respective authors):
 * <a href="https://github.com/olifolkerd/tabulator" target="_blank">Tabulator</a> (v6.3.0), by <a href="https://github.com/olifolkerd/" target="_blank">Oli Folkerd</a> (<a href="https://github.com/olifolkerd/tabulator/blob/master/LICENSE" target="_blank">MIT</a> license)
-* <a href="https://github.com/twbs/bootstrap/" target="_blank">Bootstrap</a>, by <a href="https://getbootstrap.com/docs/4.3/about/team/" target="_blank">the Bootstrap team</a> (<a href="https://github.com/twbs/bootstrap/blob/master/LICENSE" target="_blank">MIT</a> license)
-* <a href="https://github.com/jquery/jquery" target="_blank">jQuery</a>, by <a href="https://jquery.org/team/" target="_blank">the jQuery Foundation</a> (<a href="https://github.com/jquery/jquery/blob/master/LICENSE.txt" target="_blank">MIT</a> license)
 * <a href="https://github.com/SheetJS/sheetjs" target="_blank">SheetJS</a>, for XLSX export (<a href="https://github.com/SheetJS/sheetjs/blob/master/LICENSE" target="_blank">Apache-2.0</a> license)
 
 ## Useful Resources
