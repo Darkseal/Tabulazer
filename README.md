@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="icons/SmallPromo-440x280.png" alt="Tabulazer logo">
+</p>
+
 # Tabulazer
 A Chrome Extension to filter, sort, page and style any existing HTML table using the Tabulator JS library (v6.3.0).
 
