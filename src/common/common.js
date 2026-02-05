@@ -6,50 +6,54 @@
   const REG_KEY = "__tabulazerRegistry";
   const registry = (window[REG_KEY] = window[REG_KEY] || {});
 
-  function ensureHeaders($table) {
+  function ensureHeaders(table) {
     // If the table has no TH on first line, change all TDs to THs
-    $table.find("tr:first td")
-      .wrapInner("<div />")
-      .find("div")
-      .unwrap()
-      .wrap("<th />");
+    const firstRow = table.querySelector("tr");
+    if (firstRow) {
+      firstRow.querySelectorAll("td").forEach(function (td) {
+        const th = document.createElement("th");
+        th.innerHTML = td.innerHTML;
+        td.parentNode.replaceChild(th, td);
+      });
+    }
 
     // Fill empty TH on first line
     let thCnt = 0;
-    $table.find("tr:first th").each(function (_i, e) {
-      const $e = $(e);
-      if (!$e.text().trim()) {
-        thCnt++;
-        $e.html("#" + thCnt);
-      }
-    });
+    if (firstRow) {
+      firstRow.querySelectorAll("th").forEach(function (th) {
+        if (!th.textContent.trim()) {
+          thCnt++;
+          th.innerHTML = "#" + thCnt;
+        }
+      });
+    }
   }
 
-  function parseTableToData($table) {
+  function parseTableToData(table) {
     // Use first row as header definition.
-    const $rows = $table.find("tr");
-    if ($rows.length === 0) return { columns: [], data: [] };
+    const rows = table.querySelectorAll("tr");
+    if (rows.length === 0) return { columns: [], data: [] };
 
-    const $headerCells = $rows.first().find("th,td");
+    const headerCells = rows[0].querySelectorAll("th,td");
     const columns = [];
-    $headerCells.each(function (idx, cell) {
-      const title = $(cell).text().trim() || `#${idx + 1}`;
+    headerCells.forEach(function (cell, idx) {
+      const title = cell.textContent.trim() || `#${idx + 1}`;
       columns.push({ title, field: "c" + idx, headerSort: true });
     });
 
     const data = [];
-    $rows.slice(1).each(function (_r, row) {
-      const $cells = $(row).find("td,th");
-      if ($cells.length === 0) return;
+    for (let r = 1; r < rows.length; r++) {
+      const cells = rows[r].querySelectorAll("td,th");
+      if (cells.length === 0) continue;
       const obj = {};
-      $cells.each(function (idx, cell) {
+      cells.forEach(function (cell, idx) {
         // Preserve cell HTML so links/buttons remain usable in the Tabulator view.
         // Tabulator will render this via formatter:"html".
-        const html = (cell && cell.innerHTML != null) ? cell.innerHTML : $(cell).text();
+        const html = (cell && cell.innerHTML != null) ? cell.innerHTML : cell.textContent;
         obj["c" + idx] = (html || "").trim();
       });
       data.push(obj);
-    });
+    }
 
     return { columns, data };
   }
@@ -176,18 +180,18 @@
     }
 
     const selector = `table[data-tabulazer-table-id="${tableId}"]`;
-    const $table = $(selector).first();
+    const table = document.querySelector(selector);
 
-    if (!$table || $table.length === 0) {
+    if (!table) {
       console.warn("Tabulazer: table not found for id", tableId);
       return;
     }
 
     // Normalize headers before parsing
-    ensureHeaders($table);
+    ensureHeaders(table);
 
-    const originalHtml = $table.get(0).outerHTML;
-    const parsed = parseTableToData($table);
+    const originalHtml = table.outerHTML;
+    const parsed = parseTableToData(table);
 
     // Create host and replace the table
     const host = document.createElement("div");
@@ -197,8 +201,7 @@
     host.setAttribute("data-tabulazer-cols", String(parsed.columns.length));
     host.style.minHeight = "120px";
 
-    const tableEl = $table.get(0);
-    tableEl.parentNode.replaceChild(host, tableEl);
+    table.parentNode.replaceChild(host, table);
 
     getSettings().then((items) => {
       if (items.forceWidth) {
